@@ -22,6 +22,7 @@ Examples
 
 #include <msgpacksearch.hpp>
 #include <vector>
+#include <string>
 
 int main()
 {
@@ -44,12 +45,33 @@ int main()
 
    std::vector<uint8_t> data = {}; //TODO populate with serialized msgpack
 
-   Msgpacksearch msgpack_data(data.data());
+   /*  Construction
+   * 
+   *   Msgpack class is a thin wrapper around the raw bytes and does not require ownership.
+   */
+   Msgpacksearch::Msgpack msgpack_data(data.data()); 
 
-   Mspacksearch::Value value = msgpack_data["A"]; // returns std::variant with current alternative type std::string and value "hello"
-   Msgpacksearch::Value::Type type = value.type(); // returns enum type Mspacksearch::Value::Type::String
+   /* Getters
+   * 
+   * Should support operator[] syntax, as well as .get() functions. Access errors should be handled via throws (in the case of []) or null returns (in the case of .get())
+   * 
+   */
+   Msgpacksearch::Value value = msgpack_data["A"]; // returns std::variant with current alternative type 'std::string' and value "hello"
+   Msgpacksearch::Value::Type type = value.type(); // returns enum type Mspacksearch::Value::Type::String via std::variant<Types...> index
 
-    return 0;
+   std::string A = msgpack_data["A"].get<std::string>(); // prior knowledge about the type is promptly rewarded
+
+   Msgpacksearch::Value nested = msgpack_data["D"] // returns std::variant with current alternative type 'Msgpacksearch::Value' and value msgpack([1, 2, 3]).. (should this return an Array type)
+   int nested_val = nested[0].get<int>() // returns int 1 from "C": 
+
+
+   /* Setters
+   *
+   * TBD.
+   */
+
+    /* Misc */   
+   return 0;
 }
 ```
 
