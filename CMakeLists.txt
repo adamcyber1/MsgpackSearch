@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(msgpacksearch)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -O0 -Wall")
+
+set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
+
+set(MSGPACKSEARCH_INSTALL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/build/include)
+set(MSGPACKSEARCH_INSTALL_BIN_DIR ${PROJECT_SOURCE_DIR}/build/bin)
+set(MSGPACKSEARCH_INSTALL_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
+
+set(MSGPACKSEARCH_HEADERS_DIR ${PROJECT_SOURCE_DIR}/src/msgpacksearch)
+
+include_directories(${MSGPACKSEARCH_INSTALL_INCLUDE_DIR})
+include_directories(${MSGPACKSEARCH_HEADERS_DIR})
+
+add_subdirectory(src)
