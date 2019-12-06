@@ -49,7 +49,7 @@ int main()
    * 
    *   Msgpack class is a thin wrapper around the raw bytes and does not require ownership.
    */
-   Msgpacksearch::Msgpack msgpack_data(data.data()); 
+   Msgpacksearch::Msgpack msgpack_data(data); 
 
    /* Getters
    * 
@@ -59,7 +59,8 @@ int main()
    Msgpacksearch::Value value = msgpack_data["A"]; // returns std::variant with current alternative type 'std::string' and value "hello"
    Msgpacksearch::Value::Type type = value.type(); // returns enum type Mspacksearch::Value::Type::String via std::variant<Types...> index
 
-   std::string A = msgpack_data["A"].get<std::string>(); // prior knowledge about the type is promptly rewarded
+   std::string A = msgpack_data["A"].get<std::string>(); //gets a Value type (which is a wrapper around std::variant), then using accesses the std::string alternative type.
+   std::string A2 = msgpack_data.get<std::string>("A") // you should be rewarded for knowing the data type beforehand.
 
    Msgpacksearch::Value nested = msgpack_data["D"] // returns std::variant with current alternative type 'Msgpacksearch::Value' and value msgpack([1, 2, 3]).. (should this return an Array type)
    int nested_val = nested[0].get<int>() // returns int 1 from "C": 
