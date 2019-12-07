@@ -7,6 +7,31 @@ endif()
 
 project(msgpacksearch)
 
+# Download and unpack googletest at configure time
+configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+if(result)
+  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+if(result)
+  message(FATAL_ERROR "Build step for googletest failed: ${result}")
+endif()
+
+# Prevent overriding the parent project's compiler/linker
+# settings on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+# Add googletest directly to our build. This defines
+# the gtest and gtest_main targets.
+add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+                 ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+                 EXCLUDE_FROM_ALL)
+
 # languages
 enable_language(CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -15,7 +40,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -O0 -Wall")
 # options
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(BUILD_TESTS "Build Tests" OFF)
-
 
 if(BUILD_SHARED_LIBS)
     message("BUILD_SHARED_LIBS: ON")
@@ -44,6 +68,4 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 add_subdirectory(src)
 
-if(BUILD_TESTS)
-  add_subdirectory(tests)
-endif()
+add_subdirectory(test)

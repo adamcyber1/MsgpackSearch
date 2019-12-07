@@ -23,8 +23,7 @@ void test() {
         MAP32 = 0xdf
   };
 
-// @brief Thin wrapper class for reading msgpack data. Read only. Probably will be called Msgpack_View in the near future.
-// @author Adam
+/// @brief Thin wrapper class for reading msgpack data. Read only. Probably will be called Msgpack_View in the near future.
 class Msgpack {
   
   public:
@@ -61,6 +60,7 @@ class Msgpack {
   const uint8_t *data;
   const size_t size;
   const size_t offset;
+  
 };
 
 
