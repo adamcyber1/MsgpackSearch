@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <vector>
+#include <memory>
+#include <variant>
+#include <string>
 
 namespace msgpacksearch {
 
@@ -11,9 +14,8 @@ void test() {
   std::cout<<"I must be working...or something. \n";
 }
 
-
   //TODO : implement the rest of the types
-  typedef enum TYPE {
+  enum TYPE {
         STR8 = 0xd9,
         STR16 = 0xda,
         STR32 = 0xdb,
@@ -22,6 +24,12 @@ void test() {
         MAP16 = 0xde,
         MAP32 = 0xdf
   };
+
+  enum TYPE_MASKS {
+    MAP = 0xdf
+  };
+
+  typedef std::variant<std::monostate, std::string> obj;
 
 /// @brief Thin wrapper class for reading msgpack data. Read only. Probably will be called Msgpack_View in the near future.
 class Msgpack {
@@ -48,19 +56,25 @@ class Msgpack {
   /// Move constructor
   Msgpack(Msgpack const && other) = delete;
 
+  /// Key based search of an object
+  obj get(const std::string &key);
+
+  /// Index based search of an array
+  obj get(const int index);
+
   private:
 
   /* How should the data ownership be handled....
   * 
   * Case 1: Msgpack doesn't own the underlying data and can only read it. This is unsafe if the data that mspack points to is deallocated....is this acceptable? Can the lifetime
-  * of the data be tracked somehow? Msgpack_view ? 
+  * of the data be tracked somehow? Msgpack_view ?  USE SHARED_PTR
   * 
-  * Case 2: Mspack owns the underlying data, obtained either via move or copy. Read an dwrite is allowed.
+  * Case 2: Mspack owns the underlying data, obtained either via move or copy. Read and write is allowed.
   */
+
   const uint8_t *data;
   const size_t size;
   const size_t offset;
-  
 };
 
 }
