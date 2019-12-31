@@ -4,6 +4,7 @@ project(msgpacksearch CXX)
 set(SOURCE_FILES
     msgpacksearch.h
     msgpacksearch.cpp
+    object.h
 )
 
 add_library(msgpacksearch ${SOURCE_FILES})

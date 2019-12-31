@@ -15,6 +15,7 @@ void test() {
 }
 
   //TODO : implement the rest of the types
+  /*
   enum TYPE {
         STR8 = 0xd9,
         STR16 = 0xda,
@@ -24,12 +25,113 @@ void test() {
         MAP16 = 0xde,
         MAP32 = 0xdf
   };
+  */
 
-  enum TYPE_MASKS {
-    MAP = 0xdf
+  enum FORMAT {
+      NIL                  = 0x00,
+      TRUE              = 0x01,
+      FALSE             = 0x02,
+      BIN_8             = 0x03,
+      BIN_16            = 0x04,
+      BIN_32            = 0x05,
+      EXT_8             = 0x06,
+      EXT_16            = 0x07,
+      EXT_32            = 0x09,
+      FLOAT_32          = 0x0A,
+      FLOAT_64          = 0x0B,
+      UINT_8            = 0x0C,
+      UINT_16           = 0x0D,
+      UINT_32           = 0x0E,
+      UINT_64           = 0x0F,
+      INT_8             = 0x10,
+      INT_16            = 0x11,
+      INT_32            = 0x12,
+      INT_64            = 0x13,
+      FIXEXT_1          = 0x14,
+      FIXEXT_2          = 0x15,
+      FIXEXT_4          = 0x16,
+      FIXEXT_8          = 0x17,
+      FIXEXT_16         = 0x18,
+      STR_8             = 0X19,
+      STR_16            = 0X1A,
+      STR_32            = 0X1B,
+      ARRAY_16          = 0X1C,
+      ARRAY_32          = 0X1D,
+      MAP_16            = 0X1E,
+      MAP_32            = 0X1F,
+      POS_FIXINT        = 0x20,
+      NEG_FIXINT        = 0x21,
+      FIX_MAP           = 0x22,
+      FIX_ARRAY         = 0x23,
+      FIX_STR           = 0x24
   };
 
-  typedef std::variant<std::monostate, std::string> obj;
+  enum TYPE_MASK {
+    MAP16 = 0xde,
+    MAP32 = 0xdf,
+    ARRAY16 = 0xdc,
+    ARRAY32 = 0xdd,
+    STR8   = 0xd9,
+    STR16  = 0xda,
+    STR32 = 0xdb  
+  };
+
+  struct FormatInfo
+  {
+    FormatInfo() = default;
+    FormatInfo(size_t size, FORMAT format) : size(size), format(format) {}
+
+    size_t size; // 
+    FORMAT format;
+    uint8_t *data; // pointer to where the data starts
+  };
+
+  class MsgpackObject
+  {
+  public:
+  MsgpackObject() = delete;
+  explicit MsgpackObject(const uint8_t *start) : start(start), format(resolve_format(*start)) {}
+  size_t get_size()
+  {
+      const uint32_t trail[] = {
+      1, // bin     8  0xc4
+      2, // bin    16  0xc5
+      4, // bin    32  0xc6
+      1, // ext     8  0xc7
+      2, // ext    16  0xc8
+      4, // ext    32  0xc9
+      4, // float  32  0xca
+      8, // float  64  0xcb
+      1, // uint    8  0xcc
+      2, // uint   16  0xcd
+      4, // uint   32  0xce
+      8, // uint   64  0xcf
+      1, // int     8  0xd0
+      2, // int    16  0xd1
+      4, // int    32  0xd2
+      8, // int    64  0xd3
+      2, // fixext  1  0xd4
+      3, // fixext  2  0xd5
+      5, // fixext  4  0xd6
+      9, // fixext  8  0xd7
+      17,// fixext 16  0xd8
+      1, // str     8  0xd9
+      2, // str    16  0xda
+      4, // str    32  0xdb
+      2, // array  16  0xdc
+      4, // array  32  0xdd
+      2, // map    16  0xde
+      4, // map    32  0xdf
+    };
+    
+
+  }
+
+  const uint8_t *start;
+  FORMAT format;
+  };
+
+  typedef std::variant<std::monostate, std::string> Object;
 
 /// @brief Thin wrapper class for reading msgpack data. Read only. Probably will be called Msgpack_View in the near future.
 class Msgpack {
@@ -56,13 +158,22 @@ class Msgpack {
   /// Move constructor
   Msgpack(Msgpack const && other) = delete;
 
-  /// Key based search of an object
-  obj get(const std::string &key);
+  /// Key based search of an Object
+  Object get(const std::string &key);
 
   /// Index based search of an array
-  obj get(const int index);
+  Object get(const int index);
 
   private:
+
+  /// find the location of key:value in map, returns NULL if not found
+  uint8_t* find_map_key(const uint8_t *start, const size_t nmb_elements, const std::string &key);
+
+  FORMAT resolve_format(uint8_t byte);
+
+  /// skips a map element (Recursive). Returns the number of bytes skipped
+  size_t skip_element(const uint8_t* start);
+  
 
   /* How should the data ownership be handled....
   * 
