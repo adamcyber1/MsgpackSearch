@@ -1,9 +1,18 @@
-#include <gtest/gtest.h>
-#include <msgpacksearch.h>
+#include <utility>
+#include <variant>
 
-TEST(config, first)
+#include <gtest/gtest.h>
+
+#include "msgpacksearch.h"
+
+using namespace msgpacksearch;
+
+TEST(parse, integers)
 {
-    EXPECT_EQ(1, 1);
+    std::vector<uint8_t> data = {}
+    Msgpack data();
+
+    
 }
 
 TEST(config, second)

@@ -6,6 +6,10 @@
 #include <memory>
 #include <variant>
 #include <string>
+#include <utility>
+
+#include "object.h"
+
 
 namespace msgpacksearch {
 
@@ -28,7 +32,7 @@ void test() {
   */
 
   enum FORMAT {
-      NIL                  = 0x00,
+      NIL               = 0x00,
       TRUE              = 0x01,
       FALSE             = 0x02,
       BIN_8             = 0x03,
@@ -89,43 +93,7 @@ void test() {
   class MsgpackObject
   {
   public:
-  MsgpackObject() = delete;
-  explicit MsgpackObject(const uint8_t *start) : start(start), format(resolve_format(*start)) {}
-  size_t get_size()
-  {
-      const uint32_t trail[] = {
-      1, // bin     8  0xc4
-      2, // bin    16  0xc5
-      4, // bin    32  0xc6
-      1, // ext     8  0xc7
-      2, // ext    16  0xc8
-      4, // ext    32  0xc9
-      4, // float  32  0xca
-      8, // float  64  0xcb
-      1, // uint    8  0xcc
-      2, // uint   16  0xcd
-      4, // uint   32  0xce
-      8, // uint   64  0xcf
-      1, // int     8  0xd0
-      2, // int    16  0xd1
-      4, // int    32  0xd2
-      8, // int    64  0xd3
-      2, // fixext  1  0xd4
-      3, // fixext  2  0xd5
-      5, // fixext  4  0xd6
-      9, // fixext  8  0xd7
-      17,// fixext 16  0xd8
-      1, // str     8  0xd9
-      2, // str    16  0xda
-      4, // str    32  0xdb
-      2, // array  16  0xdc
-      4, // array  32  0xdd
-      2, // map    16  0xde
-      4, // map    32  0xdf
-    };
-    
-
-  }
+  MsgpackObject() = default;
 
   const uint8_t *start;
   FORMAT format;
@@ -173,6 +141,11 @@ class Msgpack {
 
   /// skips a map element (Recursive). Returns the number of bytes skipped
   size_t skip_element(const uint8_t* start);
+
+  // parses an element, returning the number of bytes read and the element
+  // when a complex element is encountered (i.e. a nested map, skip() is recursively called on this element)
+  // and the total bytes read is incremented accordingly
+  std::pair<size_t, msgpack_object> parse_data(const uint8_t* start);
   
 
   /* How should the data ownership be handled....

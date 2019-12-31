@@ -1,8 +1,9 @@
 #include <cstdint>
+#include <variant>
 
 namespace msgpacksearch
 {
-    
+
  enum msgpack_object_type{
     MSGPACK_OBJECT_NIL                  = 0x00,
     MSGPACK_OBJECT_BOOLEAN              = 0x01,
@@ -18,56 +19,44 @@ namespace msgpacksearch
     MSGPACK_OBJECT_EXT                  = 0x09
 };
 
-struct msgpack_object;
-struct msgpack_object_kv;
+// basic types
 
-typedef struct {
+struct msgpack_str
+{
+    msgpack_str(uint32_t size, const char *data) : size(size), data(data) {}
     uint32_t size;
-    struct msgpack_object* ptr;
-} msgpack_object_array;
+    const char* data;
+};
 
-typedef struct {
+struct msgpack_bin
+{
+    msgpack_bin(uint32_t size, const uint8_t *data) : size(size), data(data) {}
     uint32_t size;
-    struct msgpack_object_kv* ptr;
-} msgpack_object_map;
+    const uint8_t* data;
+};
 
-typedef struct {
+struct msgpack_map
+{
+    msgpack_map(uint32_t size, const uint8_t *data) : size(size), data(data) {}
     uint32_t size;
-    const char* ptr;
-} msgpack_object_str;
+    const uint8_t* data;
+};
 
-typedef struct {
+struct msgpack_array
+{
+    msgpack_array(uint32_t size, const uint8_t *data) : size(size), data(data) {}
     uint32_t size;
-    const char* ptr;
-} msgpack_object_bin;
+    const uint8_t* data;
+};
 
-typedef struct {
-    int8_t type;
-    uint32_t size;
-    const char* ptr;
-} msgpack_object_ext;
-
-typedef union {
-    bool boolean;
-    uint64_t u64;
-    int64_t  i64;
-    double   f64;
-    msgpack_object_array array;
-    msgpack_object_map map;
-    msgpack_object_str str;
-    msgpack_object_bin bin;
-    msgpack_object_ext ext;
-} msgpack_object_union;
-
-typedef struct msgpack_object {
-    msgpack_object_type type;
-    msgpack_object_union via;
-} msgpack_object;
-
-typedef struct msgpack_object_kv {
-    msgpack_object key;
-    msgpack_object val;
-} msgpack_object_kv;
-
+typedef std::variant<std::monostate,
+             bool, 
+             uint64_t,
+             int64_t,
+             double,
+             msgpack_array,
+             msgpack_map,
+             msgpack_bin,
+             msgpack_str> msgpack_object;
 
 }

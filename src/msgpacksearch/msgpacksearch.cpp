@@ -1,6 +1,7 @@
 #include "msgpacksearch.h"
 
 #include <cstring>
+#include <iostream>
 
 namespace msgpacksearch
 {
@@ -13,6 +14,7 @@ Msgpack::Msgpack(const std::vector<uint8_t> &data) : Msgpack(data.data(), data.s
 
 Msgpack::Msgpack(const std::vector<char> &data) : Msgpack((uint8_t *)data.data(), data.size()) {}
 
+/*
 FORMAT resolve_format(uint8_t byte)
 {
         if (0x00 <= byte && byte <= 0x7f) { // Positive Fixnum
@@ -84,7 +86,311 @@ FORMAT resolve_format(uint8_t byte)
             return FORMAT::NIL;
         }
 }
+*/
 
+ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
+ {
+     size_t bytes_read = 0;
+     size_t offset = 0;
+
+     switch (*start)
+     {
+         case 0x00 ... 0x7f: // positive fixnum
+         {
+            //  positive fixnum stores 7-bit positive integer
+            // +--------+
+            // |0XXXXXXX|
+            // +--------+
+            return std::make_pair<size_t, msgpack_object>(1, static_cast<uint64_t>(*start));
+         }
+         case 0xe0 ... 0xff: // negative fixnum
+         {
+            // negative fixnum stores 5-bit negative integer
+            // +--------+
+            // |111YYYYY|
+            // +--------+
+            // TODO convert 5-bit negative integer to negative int64_t
+
+            return std::make_pair<size_t, msgpack_object>(1, static_cast<int64_t>(*start));
+
+         }
+         case 0xc0 ... 0xdf: // variable length types
+         {
+              switch(*start) 
+              {
+                    case 0xc0:
+                    {
+                        return std::make_pair<size_t, msgpack_object>(1, std::monostate());
+                    }
+                    case 0xc2:  // false
+                    {
+                        return std::make_pair<size_t, msgpack_object>(1, false);
+                    }
+                    case 0xc3:  // true
+                    {
+                        return std::make_pair<size_t, msgpack_object>(1, true);
+                    }
+                    case 0xc4: // bin 8
+                    {
+                        // +--------+--------+========+
+                        // |  0xc4  |XXXXXXXX|  data  |
+                        // +--------+--------+========+
+
+                        uint8_t bin8_size;
+                        std::memcpy(&bin8_size, start + 1, sizeof(bin8_size));
+
+                        return std::make_pair<size_t, msgpack_object>(2 + (size_t)bin8_size, msgpack_bin(bin8_size, start + 2));
+                    }
+                    case 0xc5: // bin 16
+                    {    
+                        // +--------+--------+--------+========+
+                        // |  0xc5  |YYYYYYYY|YYYYYYYY|  data  |
+                        // +--------+--------+--------+========+
+
+                        uint16_t bin16_size;
+                        std::memcpy(&bin16_size, start + 1, sizeof(bin16_size));
+
+                        return std::make_pair<size_t, msgpack_object>((size_t)bin16_size, msgpack_bin(bin16_size, start + 3));
+
+                    }
+                    case 0xc6: // bin 32
+                    {
+                        // +--------+--------+--------+--------+--------+========+
+                        // |  0xc6  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|  data  |
+                        // +--------+--------+--------+--------+--------+========+
+                        uint32_t bin32_size;
+                        std::memcpy(&bin32_size, start + 1, sizeof(bin32_size));
+
+                        return std::make_pair<size_t, msgpack_object>((size_t)bin32_size, msgpack_bin(bin32_size, start + 5));
+                    }
+                    case 0xc7: // ext 8
+                    {
+
+
+                    }
+                    case 0xc8: // ext 16
+                    {
+
+                    }
+                    case 0xc9: // ext 32
+                    {
+
+                    }
+                    case 0xca:  // float
+                    {
+                        // +--------+--------+--------+--------+--------+
+                        // |  0xca  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
+                        // +--------+--------+--------+--------+--------+
+
+
+                    }
+                    case 0xcb:  // double
+                    {
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xcb  |YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+
+
+
+                    }
+                    case 0xcc:  // unsigned int  8
+                    {
+                        // +--------+--------+
+                        // |  0xcc  |ZZZZZZZZ|
+                        // +--------+--------+
+
+                        return std::make_pair<size_t, msgpack_object>(2, (uint64_t)(*start));
+
+                    }
+                    case 0xcd:  // unsigned int 16
+                    {
+                        // +--------+--------+--------+
+                        // |  0xcd  |ZZZZZZZZ|ZZZZZZZZ|
+                        // +--------+--------+--------+
+
+                        uint16_t value;
+                        memcpy(&data, start + 1, sizeof(value));
+
+                        return std::make_pair<size_t, msgpack_object>(3, (uint64_t)(value));
+
+                    }
+                    case 0xce:  // unsigned int 32
+                    {
+                        // +--------+--------+--------+--------+--------+
+                        // |  0xce  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|
+                        // +--------+--------+--------+--------+--------+
+
+                        uint32_t value;
+                        memcpy(&data, start + 1, sizeof(value));
+
+                        return std::make_pair<size_t, msgpack_object>(5, (uint64_t)(value));
+
+                    }
+                    case 0xcf:  // unsigned int 64
+                    {
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xcf  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+ 
+
+                        uint64_t value;
+                        memcpy(&data, start + 1, sizeof(value));
+
+                        return std::make_pair<size_t, msgpack_object>(9, value);
+
+                    }
+                    case 0xd0:  // signed int  8
+                    {
+                        // +--------+--------+
+                        // |  0xd0  |ZZZZZZZZ|
+                        // +--------+--------+
+
+                        return std::make_pair<size_t, msgpack_object>(2, (int64_t)(*start));
+                    }
+                    case 0xd1:  // signed int 16
+                    {
+                        // +--------+--------+--------+
+                        // |  0xd1  |ZZZZZZZZ|ZZZZZZZZ|
+                        // +--------+--------+--------+
+
+                        int16_t value;
+                        memcpy(&data, start + 1, sizeof(value));
+
+                        return std::make_pair<size_t, msgpack_object>(3, (int64_t)value);
+
+
+                    }
+                    case 0xd2:  // signed int 32
+                    {
+                        // +--------+--------+--------+--------+--------+
+                        // |  0xd2  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|
+                        // +--------+--------+--------+--------+--------+
+                        int32_t value;
+                        memcpy(&data, start + 1, sizeof(value));
+
+                        return std::make_pair<size_t, msgpack_object>(5, (int64_t)value);
+
+                    }
+                    case 0xd3:  // signed int 64
+                    {
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xd3  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        int64_t value;
+                        memcpy(&data, start + 1, sizeof(value));
+
+                        return std::make_pair<size_t, msgpack_object>(3, value);
+
+                    }
+                    case 0xd4:  // fixext 1
+                    {
+
+                    }
+                    case 0xd5:  // fixext 2
+                    {
+
+                    }
+                    case 0xd6:  // fixext 4
+                    {
+
+                    }
+                    case 0xd7:  // fixext 8
+                    {
+
+                    }
+                    case 0xd8:  // fixext 16
+                    {
+
+                    }
+
+                    case 0xd9:  // str 8
+                    {
+                        // +--------+--------+========+
+                        // |  0xd9  |YYYYYYYY|  data  |
+                        // +--------+--------+========+
+
+                        uint8_t str8_size;
+                        std::memcpy(&str8_size, start + 1, sizeof(str8_size));
+
+                        return std::make_pair<size_t, msgpack_object>(2 + (size_t)str8_size, msgpack_str(str8_size, (char *)(start + 2)));
+
+                    }
+                    case 0xda:  // str 16
+                    {
+                        // +--------+--------+--------+========+
+                        // |  0xda  |ZZZZZZZZ|ZZZZZZZZ|  data  |
+                        // +--------+--------+--------+========+
+
+                        uint8_t str16_size;
+                        std::memcpy(&str16_size, start + 1, sizeof(str16_size));
+
+                        return std::make_pair<size_t, msgpack_object>(3 + (size_t)str16_size, msgpack_str(str16_size, (char *)(start + 3)));
+
+                    }
+                    case 0xdb:  // str 32
+                    {
+                        // +--------+--------+--------+--------+--------+========+
+                        // |  0xdb  |AAAAAAAA|AAAAAAAA|AAAAAAAA|AAAAAAAA|  data  |
+                        // +--------+--------+--------+--------+--------+========+
+
+                        uint32_t str32_size;
+                        std::memcpy(&str32_size, start + 1, sizeof(str32_size));
+
+                        return std::make_pair<size_t, msgpack_object>(5 + (size_t)str32_size, msgpack_str(str32_size, (char *)(start + 5)));
+
+                    }
+                    case 0xdc:  // array 16
+                    {
+                        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
+                        // |  0xdc  |YYYYYYYY|YYYYYYYY|    N objects    |
+                        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
+
+
+                    }
+                    case 0xdd:  // array 32
+                    {
+                        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
+                        // |  0xdd  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N objects    |
+                        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
+
+                    }
+                    case 0xde:  // map 16
+                    {
+                        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
+                        // |  0xde  |YYYYYYYY|YYYYYYYY|    N*2 objects    |
+                        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
+                    }
+                    case 0xdf:  // map 32
+                    {
+                        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
+                        // |  0xdf  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N*2 objects  |
+                        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
+
+                    }
+                    default:
+                    {
+                         std::cerr << "Parsing error. Invalid type byte: " << *start << std::endl;
+                    }
+              }
+
+         }
+         case 0xa0 ... 0xbf: // fixstr
+         {
+
+         }
+         case 0x90 ... 0x9f: // fix array
+         {
+
+         }
+         case 0x80 ... 0x8f: // fix map
+         {
+
+         }
+         default:
+         {
+             std::cerr << "Parsing error. Invalid type byte: " << *start << std::endl;
+         }
+     }
+ }
 uint8_t* Msgpack::find_map_key(const uint8_t *start, const size_t nmb_elements, const std::string &key)
 {   
     // start = pointr to start of map
@@ -187,7 +493,6 @@ Object Msgpack::get(const std::string &key)
     
     return Object();
 }
-
 
 Object Msgpack::get(const int index)
 {
