@@ -107,7 +107,7 @@ class Msgpack {
   public:
 
   /// Default constructor
-  Msgpack();
+  Msgpack() : data(nullptr), size(0), offset(0) {}
 
   /// Construct from std::vector
   explicit Msgpack(const std::vector<uint8_t> &data); 
@@ -124,7 +124,7 @@ class Msgpack {
   Msgpack& operator=(const Msgpack &other) = default;
 
   /// Move constructor
-  Msgpack(Msgpack const && other) = delete;
+  /// Msgpack(Msgpack const && other) = delete;
 
   /// Key based search of an Object
   Object get(const std::string &key);
@@ -132,7 +132,7 @@ class Msgpack {
   /// Index based search of an array
   Object get(const int index);
 
-  private:
+  public:
 
   /// find the location of key:value in map, returns NULL if not found
   uint8_t* find_map_key(const uint8_t *start, const size_t nmb_elements, const std::string &key);

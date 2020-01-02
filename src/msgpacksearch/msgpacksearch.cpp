@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <bits/byteswap.h>
 
 namespace msgpacksearch
 {
@@ -149,6 +150,7 @@ FORMAT resolve_format(uint8_t byte)
 
                         uint16_t bin16_size;
                         std::memcpy(&bin16_size, start + 1, sizeof(bin16_size));
+                        bin16_size = __bswap_16(bin16_size);
 
                         return std::make_pair<size_t, msgpack_object>((size_t)bin16_size, msgpack_bin(bin16_size, start + 3));
 
@@ -160,6 +162,8 @@ FORMAT resolve_format(uint8_t byte)
                         // +--------+--------+--------+--------+--------+========+
                         uint32_t bin32_size;
                         std::memcpy(&bin32_size, start + 1, sizeof(bin32_size));
+                        bin32_size = __bswap_32(bin32_size);
+
 
                         return std::make_pair<size_t, msgpack_object>((size_t)bin32_size, msgpack_bin(bin32_size, start + 5));
                     }
@@ -199,7 +203,7 @@ FORMAT resolve_format(uint8_t byte)
                         // |  0xcc  |ZZZZZZZZ|
                         // +--------+--------+
 
-                        return std::make_pair<size_t, msgpack_object>(2, (uint64_t)(*start));
+                        return std::make_pair<size_t, msgpack_object>(2, (uint64_t)(*(start + 1)));
 
                     }
                     case 0xcd:  // unsigned int 16
@@ -209,7 +213,8 @@ FORMAT resolve_format(uint8_t byte)
                         // +--------+--------+--------+
 
                         uint16_t value;
-                        memcpy(&data, start + 1, sizeof(value));
+                        std::memcpy(&value, start + 1, sizeof(value));
+                        value = __bswap_16(value);
 
                         return std::make_pair<size_t, msgpack_object>(3, (uint64_t)(value));
 
@@ -221,7 +226,8 @@ FORMAT resolve_format(uint8_t byte)
                         // +--------+--------+--------+--------+--------+
 
                         uint32_t value;
-                        memcpy(&data, start + 1, sizeof(value));
+                        memcpy(&value, start + 1, sizeof(value));
+                        value = __bswap_32(value);
 
                         return std::make_pair<size_t, msgpack_object>(5, (uint64_t)(value));
 
@@ -233,7 +239,8 @@ FORMAT resolve_format(uint8_t byte)
                         // +--------+--------+--------+--------+--------+--------+--------+--------+--------+ 
 
                         uint64_t value;
-                        memcpy(&data, start + 1, sizeof(value));
+                        memcpy(&value, start + 1, sizeof(value));
+                        value = __bswap_64(value);
 
                         return std::make_pair<size_t, msgpack_object>(9, value);
 
@@ -244,7 +251,7 @@ FORMAT resolve_format(uint8_t byte)
                         // |  0xd0  |ZZZZZZZZ|
                         // +--------+--------+
 
-                        return std::make_pair<size_t, msgpack_object>(2, (int64_t)(*start));
+                        return std::make_pair<size_t, msgpack_object>(2, (int64_t)(*(start + 1)));
                     }
                     case 0xd1:  // signed int 16
                     {
@@ -253,7 +260,8 @@ FORMAT resolve_format(uint8_t byte)
                         // +--------+--------+--------+
 
                         int16_t value;
-                        memcpy(&data, start + 1, sizeof(value));
+                        memcpy(&value, start + 1, sizeof(value));
+                        value = __bswap_16(value);
 
                         return std::make_pair<size_t, msgpack_object>(3, (int64_t)value);
 
@@ -265,7 +273,8 @@ FORMAT resolve_format(uint8_t byte)
                         // |  0xd2  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|
                         // +--------+--------+--------+--------+--------+
                         int32_t value;
-                        memcpy(&data, start + 1, sizeof(value));
+                        memcpy(&value, start + 1, sizeof(value));
+                        value = __bswap_32(value);
 
                         return std::make_pair<size_t, msgpack_object>(5, (int64_t)value);
 
@@ -276,9 +285,10 @@ FORMAT resolve_format(uint8_t byte)
                         // |  0xd3  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|
                         // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
                         int64_t value;
-                        memcpy(&data, start + 1, sizeof(value));
+                        memcpy(&value, start + 1, sizeof(value));
+                        value = __bswap_64(value);
 
-                        return std::make_pair<size_t, msgpack_object>(3, value);
+                        return std::make_pair<size_t, msgpack_object>(9, value);
 
                     }
                     case 0xd4:  // fixext 1
@@ -320,8 +330,9 @@ FORMAT resolve_format(uint8_t byte)
                         // |  0xda  |ZZZZZZZZ|ZZZZZZZZ|  data  |
                         // +--------+--------+--------+========+
 
-                        uint8_t str16_size;
+                        uint16_t str16_size;
                         std::memcpy(&str16_size, start + 1, sizeof(str16_size));
+                        str16_size = __bswap_16(str16_size);
 
                         return std::make_pair<size_t, msgpack_object>(3 + (size_t)str16_size, msgpack_str(str16_size, (char *)(start + 3)));
 
@@ -334,6 +345,7 @@ FORMAT resolve_format(uint8_t byte)
 
                         uint32_t str32_size;
                         std::memcpy(&str32_size, start + 1, sizeof(str32_size));
+                        str32_size = __bswap_32(str32_size);
 
                         return std::make_pair<size_t, msgpack_object>(5 + (size_t)str32_size, msgpack_str(str32_size, (char *)(start + 5)));
 
@@ -390,7 +402,11 @@ FORMAT resolve_format(uint8_t byte)
              std::cerr << "Parsing error. Invalid type byte: " << *start << std::endl;
          }
      }
+
+    return std::make_pair<size_t, msgpack_object>(0, std::monostate());
+
  }
+
 uint8_t* Msgpack::find_map_key(const uint8_t *start, const size_t nmb_elements, const std::string &key)
 {   
     // start = pointr to start of map
@@ -428,6 +444,11 @@ uint8_t* Msgpack::find_map_key(const uint8_t *start, const size_t nmb_elements, 
 
     return nullptr;
 }
+
+  size_t Msgpack::skip_element(const uint8_t* start)
+  {
+      return 0;
+  }
 
 
 Object Msgpack::get(const std::string &key) 
