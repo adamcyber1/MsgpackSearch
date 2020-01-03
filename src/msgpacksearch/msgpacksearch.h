@@ -135,12 +135,15 @@ class Msgpack {
   public:
 
   /// find the location of key:value in map, returns NULL if not found
-  uint8_t* find_map_key(const uint8_t *start, const size_t nmb_elements, const std::string &key);
+  uint8_t* find_map_key(const msgpack_map &map, const std::string &key);
 
   FORMAT resolve_format(uint8_t byte);
 
-  /// skips a map element (Recursive). Returns the number of bytes skipped
-  size_t skip_element(const uint8_t* start);
+  /// skips an element pointed to by start. Returns the number of bytes skipped
+  size_t skip_object(const uint8_t* start);
+
+  /// skips map data, return the number of bytes skipped
+  size_t skip_map(const msgpack_map &map);
 
   // parses an element, returning the number of bytes read and the element
   // when a complex element is encountered (i.e. a nested map, skip() is recursively called on this element)

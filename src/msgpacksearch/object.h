@@ -37,9 +37,11 @@ struct msgpack_bin
 
 struct msgpack_map
 {
-    msgpack_map(uint32_t size, const uint8_t *data) : size(size), data(data) {}
-    uint32_t size;
-    const uint8_t* data;
+    msgpack_map(uint32_t nmb_elements, size_t size, const uint8_t *data) : nmb_elements(nmb_elements), size(size), data(data) {}
+
+    uint32_t nmb_elements; // N * 2
+    size_t size; // size in bytes
+    const uint8_t* start; // points to the first byte of the elements
 };
 
 struct msgpack_array

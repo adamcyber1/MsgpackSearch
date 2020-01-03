@@ -56,14 +56,12 @@ TEST (parse, Binary)
     EXPECT_EQ(7, read);
     EXPECT_EQ("hello", cpp_str);
 
-    /*
     data = {0xa5, 'h', 'e', 'l', 'l', 'o'}; // fixstr -> hello
     std::tie(read, obj) =  msgpck.parse_data(data.data());
     str = std::get<msgpack_str>(obj);
     cpp_str = std::string(str.data, str.size);
     EXPECT_EQ(6, read);
     EXPECT_EQ("hello", cpp_str);
-    */
 
     data = {0xda, 0x00, 0x05, 'h', 'e', 'l', 'l', 'o'}; // str16 -> hello
     std::tie(read, obj) =  msgpck.parse_data(data.data());
