@@ -44,7 +44,7 @@ TEST(parse, SimpleTypes)
     EXPECT_EQ(0x0000000100000001, std::get<int64_t>(obj));
 }
 
-TEST (parse, Binary)
+TEST(parse, Binary)
 {
     std::vector<uint8_t> data;
     Msgpack msgpck(data.data(), 0);
@@ -70,6 +70,8 @@ TEST (parse, Binary)
     EXPECT_EQ(8, read);
     EXPECT_EQ("hello", cpp_str);
 }
+
+TEST
 
 
 TEST(config, second)

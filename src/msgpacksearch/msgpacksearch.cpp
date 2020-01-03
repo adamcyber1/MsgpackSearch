@@ -17,9 +17,6 @@ Msgpack::Msgpack(const std::vector<char> &data) : Msgpack((uint8_t *)data.data()
 
 std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 {
-     size_t bytes_read = 0;
-     size_t offset = 0;
-
      switch (*start)
      {
          case 0x00 ... 0x7f: // positive fixnum
@@ -90,7 +87,6 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         std::memcpy(&bin32_size, start + 1, sizeof(bin32_size));
                         bin32_size = __bswap_32(bin32_size);
 
-
                         return std::make_pair<size_t, msgpack_object>((size_t)bin32_size, msgpack_bin(bin32_size, start + 5));
                     }
                     case 0xc7: // ext 8
@@ -111,7 +107,6 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         // +--------+--------+--------+--------+--------+
                         // |  0xca  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
                         // +--------+--------+--------+--------+--------+
-
 
                     }
                     case 0xcb:  // double
@@ -190,7 +185,6 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         value = __bswap_16(value);
 
                         return std::make_pair<size_t, msgpack_object>(3, (int64_t)value);
-
 
                     }
                     case 0xd2:  // signed int 32
@@ -303,7 +297,7 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 
                         size_t bytes = skip_map(start + 3, nmb_elements);
 
-                        return std::make_pair<size_t, msgpack_object>(3, msgpack_map(nmb_elements, bytes, start + 3));
+                        return std::make_pair<size_t, msgpack_object>(3 + bytes, msgpack_map(nmb_elements, bytes, start + 3));
 
                     }
                     case 0xdf:  // map 32
@@ -318,7 +312,7 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 
                         size_t bytes = skip_map(start + 5, nmb_elements);
                         
-                        return std::make_pair<size_t, msgpack_object>(5, msgpack_map(nmb_elements, bytes, start + 5));
+                        return std::make_pair<size_t, msgpack_object>(5 + bytes, msgpack_map(nmb_elements, bytes, start + 5));
 
                     }
                     default:
@@ -346,8 +340,8 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 
             uint8_t nmb_elements = *start & 0b00001111;
 
-            size_t bytes = skip_map(start + 1, nmb_elements)
-            return std::make_pair<size_t, msgpack_object>(1, msgpack_map(nmb_elements, start + 1));
+            size_t bytes = skip_map(start + 1, nmb_elements);
+            return std::make_pair<size_t, msgpack_object>(1 + bytes, msgpack_map(nmb_elements, bytes, start + 1));
          }
          default:
          {
@@ -371,10 +365,11 @@ uint8_t* Msgpack::find_map_key(const msgpack_map &map, const std::string &key)
     size_t element_counter = 0; // current element being analysed
     uint8_t current_key;
     
-    size_t nmb_elements = map.size;
-    const uint8_t* start = map.data;
+    // size_t nmb_elements = map.size;
+    // const uint8_t* start = map.data;
 
     // terminating condition: we are done when all of the elements have been exhausted.
+    /*
     while (element_counter < nmb_elements)
     {
         current_key = *(start + map_offset);
@@ -394,6 +389,7 @@ uint8_t* Msgpack::find_map_key(const msgpack_map &map, const std::string &key)
 
 
     }
+    */
 
 
     return nullptr;
@@ -643,9 +639,9 @@ size_t Msgpack::skip_object(const uint8_t* start)
 
                         auto [read, map16] = parse_data(start);
 
-                        ASSERT(read == 3);
+                        // ASSERT(read == 3);
 
-                        return read + skip_map(std::get<msgpack_map>(map16));
+                        return read;
                     }
                     case 0xdf:  // map 32
                     {
@@ -653,11 +649,11 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xdf  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N*2 objects  |
                         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
-                        auto [read, map32] = parse_data(start);
+                        auto [read, _] = parse_data(start);
 
-                        ASSERT(read == 5);
+                        // ASSERT(read == 5);
 
-                        return read + skip_map(std::get<msgpack_map>(map32));
+                        return read;
                     }
                     default:
                     {
@@ -669,7 +665,7 @@ size_t Msgpack::skip_object(const uint8_t* start)
          case 0xa0 ... 0xbf: // fixstr
          {
             uint8_t fixstr_size = *start & 0b00011111;
-            return std::make_pair<size_t, msgpack_object>(1 + (size_t)fixstr_size, msgpack_str(fixstr_size, (char *)(start + 1)));
+            return 1 + fixstr_size;
          }
          case 0x90 ... 0x9f: // fix array
          {
@@ -688,14 +684,14 @@ size_t Msgpack::skip_object(const uint8_t* start)
     return 0;
 }
 
-size_t Msgpack::skip_map(const msgpack_map &map)
+size_t Msgpack::skip_map(const uint8_t* start, const size_t nmb_elements)
 {
     size_t offset = 0; // offset into the map data
     size_t element_count = 0;
 
-    while (element_count < map.size * 2)
+    while (element_count < nmb_elements * 2)
     {
-        offset += skip_object(map.data + offset);
+        offset += skip_object(start + offset);
         
         element_count++;
     }

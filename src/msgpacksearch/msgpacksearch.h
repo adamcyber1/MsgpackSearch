@@ -143,7 +143,7 @@ class Msgpack {
   size_t skip_object(const uint8_t* start);
 
   /// skips map data, return the number of bytes skipped
-  size_t skip_map(const msgpack_map &map);
+  size_t skip_map(const uint8_t* start, const size_t nmb_elements);
 
   // parses an element, returning the number of bytes read and the element
   // when a complex element is encountered (i.e. a nested map, skip() is recursively called on this element)
