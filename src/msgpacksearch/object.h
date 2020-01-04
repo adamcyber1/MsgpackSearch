@@ -46,9 +46,10 @@ struct msgpack_map
 
 struct msgpack_array
 {
-    msgpack_array(uint32_t size, const uint8_t *data) : size(size), data(data) {}
-    uint32_t size;
-    const uint8_t* data;
+    msgpack_array(uint32_t nmb_elements, size_t size, const uint8_t *start) : nmb_elements(nmb_elements), size(size), start(start) {}
+    uint32_t nmb_elements; // N
+    size_t size;
+    const uint8_t* start;
 };
 
 typedef std::variant<std::monostate,
@@ -60,5 +61,4 @@ typedef std::variant<std::monostate,
              msgpack_map,
              msgpack_bin,
              msgpack_str> msgpack_object;
-
 }

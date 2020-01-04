@@ -145,9 +145,10 @@ class Msgpack {
   /// skips map data, return the number of bytes skipped
   size_t skip_map(const uint8_t* start, const size_t nmb_elements);
 
+  /// skips array data, returns the number of bytes skipped
+  size_t skip_array(const uint8_t* start, const size_t nmb_elements);
+
   // parses an element, returning the number of bytes read and the element
-  // when a complex element is encountered (i.e. a nested map, skip() is recursively called on this element)
-  // and the total bytes read is incremented accordingly
   std::pair<size_t, msgpack_object> parse_data(const uint8_t* start);
   
 

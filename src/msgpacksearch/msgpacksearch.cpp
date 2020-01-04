@@ -115,8 +115,6 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         // |  0xcb  |YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|
                         // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
 
-
-
                     }
                     case 0xcc:  // unsigned int  8
                     {
@@ -276,13 +274,26 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         // |  0xdc  |YYYYYYYY|YYYYYYYY|    N objects    |
                         // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
+                        uint16_t nmb_elements;
+                        std::memcpy(&nmb_elements, start + 1, sizeof(nmb_elements));
+                        nmb_elements = __bswap_16(nmb_elements);
 
+                        size_t bytes = skip_array(start + 3, nmb_elements);
+
+                        return std::make_pair<size_t, msgpack_object>(3 + bytes, msgpack_array(nmb_elements, bytes, start + 3));
                     }
                     case 0xdd:  // array 32
                     {
                         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
                         // |  0xdd  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N objects    |
                         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
+                        uint32_t nmb_elements;
+                        std::memcpy(&nmb_elements, start + 1, sizeof(nmb_elements));
+                        nmb_elements = __bswap_32(nmb_elements);
+
+                        size_t bytes = skip_array(start + 5, nmb_elements);
+
+                        return std::make_pair<size_t, msgpack_object>(5 + bytes, msgpack_array(nmb_elements, bytes, start + 5));
 
                     }
                     case 0xde:  // map 16
@@ -306,7 +317,7 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         // |  0xdf  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N*2 objects  |
                         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
-                        uint16_t nmb_elements;
+                        uint32_t nmb_elements;
                         std::memcpy(&nmb_elements, start + 1, sizeof(nmb_elements));
                         nmb_elements = __bswap_32(nmb_elements);
 
@@ -330,6 +341,14 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
          case 0x90 ... 0x9f: // fix array
          {
 
+            // +--------+~~~~~~~~~~~~~~~~~+
+            // |1001XXXX|    N objects    |
+            // +--------+~~~~~~~~~~~~~~~~~+
+
+            uint8_t nmb_elements = *start & 0b00001111;
+
+            size_t bytes = skip_array(start + 1, nmb_elements);
+            return std::make_pair<size_t, msgpack_object>(1 + bytes, msgpack_array(nmb_elements, bytes, start + 1));
          }
          case 0x80 ... 0x8f: // fix map
          {
@@ -637,7 +656,7 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xde  |YYYYYYYY|YYYYYYYY|    N*2 objects    |
                         // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
-                        auto [read, map16] = parse_data(start);
+                        auto [read, _map16] = parse_data(start);
 
                         // ASSERT(read == 3);
 
@@ -649,7 +668,7 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xdf  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N*2 objects  |
                         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
-                        auto [read, _] = parse_data(start);
+                        auto [read, _map32] = parse_data(start);
 
                         // ASSERT(read == 5);
 
@@ -690,6 +709,21 @@ size_t Msgpack::skip_map(const uint8_t* start, const size_t nmb_elements)
     size_t element_count = 0;
 
     while (element_count < nmb_elements * 2)
+    {
+        offset += skip_object(start + offset);
+        
+        element_count++;
+    }
+
+    return offset;
+}
+
+size_t Msgpack::skip_array(const uint8_t* start, const size_t nmb_elements)
+{
+    size_t offset = 0; // offset into the map data
+    size_t element_count = 0;
+
+    while (element_count < nmb_elements)
     {
         offset += skip_object(start + offset);
         

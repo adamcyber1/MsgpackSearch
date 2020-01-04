@@ -71,7 +71,104 @@ TEST(parse, Binary)
     EXPECT_EQ("hello", cpp_str);
 }
 
-TEST
+TEST(parse, Maps)
+{
+    std::vector<uint8_t> data;
+    Msgpack msgpck(data.data(), 0);
+
+    /*
+    {
+        "a" : 1
+    }
+    */
+    data = {0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x61, 0x01}; //map32
+    auto [read, obj] = msgpck.parse_data(data.data());
+    msgpack_map map = std::get<msgpack_map>(obj);
+    
+    EXPECT_EQ(read, 8);
+    EXPECT_EQ(map.nmb_elements, 1);
+    EXPECT_EQ(map.size, 3);
+    EXPECT_EQ(map.start, data.data() + 5);
+
+
+    data = {0xDE, 0x00, 0x01, 0xA1, 0x61, 0x01}; //map16
+    std::tie(read, obj) = msgpck.parse_data(data.data());
+    map = std::get<msgpack_map>(obj);
+    
+    EXPECT_EQ(read, 6);
+    EXPECT_EQ(map.nmb_elements, 1);
+    EXPECT_EQ(map.size, 3);
+    EXPECT_EQ(map.start, data.data() + 3);
+
+    data = {0x81, 0xA1, 0x61, 0x01}; // fixmap
+    std::tie(read, obj) = msgpck.parse_data(data.data());
+    map = std::get<msgpack_map>(obj);
+    
+    EXPECT_EQ(read, 4);
+    EXPECT_EQ(map.nmb_elements, 1);
+    EXPECT_EQ(map.size, 3);
+    EXPECT_EQ(map.start, data.data() + 1);
+}
+
+TEST(parse, Arrays)
+{
+    std::vector<uint8_t> data;
+    Msgpack msgpck(data.data(), 0);
+
+    /*
+    [1, 2, 3]
+
+    */
+    data = {0xDD, 0x00, 0x00, 0x00, 0x03, 0x01, 0x02, 0x03}; // array32
+    auto [read, obj] = msgpck.parse_data(data.data());
+    msgpack_array array = std::get<msgpack_array>(obj);
+    
+    EXPECT_EQ(read, 8);
+    EXPECT_EQ(array.nmb_elements, 3);
+    EXPECT_EQ(array.size, 3);
+    EXPECT_EQ(array.start, data.data() + 5);
+
+
+    data = {0xDC, 0x00, 0x03, 0x01, 0x02, 0x03}; //array16
+    std::tie(read, obj) = msgpck.parse_data(data.data());
+    array = std::get<msgpack_array>(obj);
+    
+    EXPECT_EQ(read, 6);
+    EXPECT_EQ(array.nmb_elements, 3);
+    EXPECT_EQ(array.size, 3);
+    EXPECT_EQ(array.start, data.data() + 3);
+
+    data = {0x93, 0x01, 0x02, 0x03}; // fixarray
+    std::tie(read, obj) = msgpck.parse_data(data.data());
+    array = std::get<msgpack_array>(obj);
+    
+    EXPECT_EQ(read, 4);
+    EXPECT_EQ(array.nmb_elements, 3);
+    EXPECT_EQ(array.size, 3);
+    EXPECT_EQ(array.start, data.data() + 1);
+}
+
+TEST(parse , nested_objects)
+{
+    std::vector<uint8_t> data;
+    Msgpack msgpck(data.data(), 0);
+
+    /*
+    {
+    "a" : {
+            "b": 1
+        }
+    }
+    */
+    data = {0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x61, 0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x62, 0x01}; // nested map32s
+    auto [read, obj] = msgpck.parse_data(data.data());
+    msgpack_map map = std::get<msgpack_map>(obj);
+    
+    EXPECT_EQ(read, 15);
+    EXPECT_EQ(map.nmb_elements, 1);
+    EXPECT_EQ(map.size, 10);
+    EXPECT_EQ(map.start, data.data() + 5);
+}
 
 
 TEST(config, second)
