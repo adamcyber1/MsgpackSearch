@@ -132,10 +132,8 @@ class Msgpack {
   /// Index based search of an array
   Object get(const int index);
 
-  public:
-
   /// find the location of key:value in map, returns NULL if not found
-  uint8_t* find_map_key(const msgpack_map &map, const std::string &key);
+  const uint8_t* find_map_key(const msgpack_map &map, const std::string &key);
 
   FORMAT resolve_format(uint8_t byte);
 

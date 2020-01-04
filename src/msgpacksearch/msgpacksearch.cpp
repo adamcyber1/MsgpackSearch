@@ -372,44 +372,29 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 
 }
 
-uint8_t* Msgpack::find_map_key(const msgpack_map &map, const std::string &key)
+const uint8_t* Msgpack::find_map_key(const msgpack_map &map, const std::string &key)
 {   
-    // start = pointr to start of map
-    // nmb_elements = number of elements in map
-    // key = key to search for
-    // we only care about the top level of the map, so we have to skip non-trivial objects that
-    // do not have a matching key
+    uint32_t element_count = 0;
+    size_t offset = 0;
 
-    size_t map_offset = 0; //offset into the map
-    size_t element_counter = 0; // current element being analysed
-    uint8_t current_key;
-    
-    // size_t nmb_elements = map.size;
-    // const uint8_t* start = map.data;
-
-    // terminating condition: we are done when all of the elements have been exhausted.
-    /*
-    while (element_counter < nmb_elements)
+    while (element_count < map.nmb_elements)
     {
-        current_key = *(start + map_offset);
+        auto [key_read, current_key] = parse_data(map.start + offset);
+        offset += key_read;
 
-
-        // currently only handling string keys
-        if (current_key == TYPE_MASK::STR8 || (current_key >= 0b10100000 && current_key <= 0b10111111) ||
-            current_key  == TYPE_MASK::STR16 || current_key == TYPE_MASK::STR32)
+        if (std::holds_alternative<msgpack_str>(current_key))
         {
-            
+            msgpack_str temp = std::get<msgpack_str>(current_key);
+            std::string cpp_string = std::string(temp.data, temp.size);
+
+            if (key == cpp_string)
+                return map.start + offset; // the location of the value in the key:value pair 
 
         } else
         {
-            map_offset += skip_object(start + map_offset);
+            offset += skip_object(map.start + offset);
         }
-        
-
-
     }
-    */
-
 
     return nullptr;
 }
@@ -550,7 +535,6 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xd0  |ZZZZZZZZ|
                         // +--------+--------+
                         return 2;
-
                     }
                     case 0xd1:  // signed int 16
                     {
@@ -641,7 +625,9 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xdc  |YYYYYYYY|YYYYYYYY|    N objects    |
                         // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
+                        auto [read, _array16] = parse_data(start);
 
+                        return read;
                     }
                     case 0xdd:  // array 32
                     {
@@ -649,6 +635,9 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xdd  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N objects    |
                         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
 
+                        auto [read, _array32] = parse_data(start);
+
+                        return read;
                     }
                     case 0xde:  // map 16
                     {
@@ -688,11 +677,15 @@ size_t Msgpack::skip_object(const uint8_t* start)
          }
          case 0x90 ... 0x9f: // fix array
          {
+            auto [read, _fixarray] = parse_data(start);
 
+            return read;
          }
          case 0x80 ... 0x8f: // fix map
          {
+            auto [read, _fixmap] = parse_data(start);
 
+            return read;
          }
          default:
          {
@@ -732,7 +725,6 @@ size_t Msgpack::skip_array(const uint8_t* start, const size_t nmb_elements)
 
     return offset;
 }
-
 
 Object Msgpack::get(const std::string &key) 
 {

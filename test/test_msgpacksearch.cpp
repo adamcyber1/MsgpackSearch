@@ -170,6 +170,51 @@ TEST(parse , nested_objects)
     EXPECT_EQ(map.start, data.data() + 5);
 }
 
+TEST(find, find_map_key)
+{
+    std::vector<uint8_t> data;
+    Msgpack msgpck(data.data(), 0);
+
+    /*
+    {
+        "a" : 1
+    }
+    */
+    data = {0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x61, 0x01}; //map32
+    auto [_read, obj] = msgpck.parse_data(data.data());
+    msgpack_map map = std::get<msgpack_map>(obj);
+
+    const uint8_t* value = msgpck.find_map_key(map, "a");
+
+    EXPECT_EQ(*value, 1);
+
+    /*
+    {
+        "a" : 1,
+        "b" : 2,
+        "c" : 3,
+        "d" : 4
+    }
+
+
+
+    */
+
+    data = {0xDF, 0x00, 0x00, 0x00, 0x04, 0xA1, 0x61, 0x01, 0xA1, 0x62, 0x02, 0xA1, 0x63, 0x03, 0xA1, 0x64, 0x04}; //map32
+    std::tie(_read, obj) = msgpck.parse_data(data.data());
+    map = std::get<msgpack_map>(obj);
+
+    value = msgpck.find_map_key(map, "e");
+
+    EXPECT_EQ(value, nullptr);
+
+    value = msgpck.find_map_key(map, "c");
+
+    EXPECT_EQ(value, nullptr);
+
+
+
+}
 
 TEST(config, second)
 {
