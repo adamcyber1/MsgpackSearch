@@ -425,8 +425,6 @@ size_t Msgpack::skip_object(const uint8_t* start)
             // +--------+
             // |111YYYYY|
             // +--------+
-            // TODO convert 5-bit negative integer to negative int64_t
-
             return 1;
 
          }
@@ -733,6 +731,42 @@ size_t Msgpack::skip_array(const uint8_t* start, const size_t nmb_elements)
 
 Object Msgpack::get(const std::string &key) 
 {
+    uint32_t nmb_elements;
+    uint8_t *map_data;
+
+    switch (*this->data)
+    {
+        case 0x80 ... 0x8f:
+        {
+            nmb_elements = (uint32_t)(*this->data & 0b00001111);
+            map_data = const_cast<uint8_t* >(this->data) + 1;
+            break;
+        }
+        case TYPE_MASK::MAP16:
+        {
+            uint16_t temp;
+            std::memcpy(&temp, this->data + 1, sizeof(temp));
+            temp = __bswap_16(temp);
+            nmb_elements = (uint32_t) temp;
+            map_data = const_cast<uint8_t* >(this->data) + 3;
+            break;
+
+        }
+        case TYPE_MASK::MAP32:
+        {
+            std::memcpy(&nmb_elements, this->data + 1, sizeof(nmb_elements));
+            nmb_elements = __bswap_32(nmb_elements);
+            map_data = const_cast<uint8_t* >(this->data)+ 5;
+            break;
+        }
+        default:
+        {
+            return Object();
+        }
+    }
+
+    // uint8_t *value = find_map_key()
+
     return Object();
 
 }
