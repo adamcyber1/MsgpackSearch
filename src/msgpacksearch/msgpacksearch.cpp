@@ -374,12 +374,17 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 
 const uint8_t* Msgpack::find_map_key(const msgpack_map &map, const std::string &key)
 {   
+    return find_map_key(map.start, map.nmb_elements, key);
+}
+
+const uint8_t* Msgpack::find_map_key(const uint8_t *start, const uint32_t nmb_elements, const std::string &key)
+{
     uint32_t element_count = 0;
     size_t offset = 0;
 
-    while (element_count < map.nmb_elements)
+    while (element_count < nmb_elements)
     {
-        auto [key_read, current_key] = parse_data(map.start + offset);
+        auto [key_read, current_key] = parse_data(start + offset);
         offset += key_read;
 
         if (std::holds_alternative<msgpack_str>(current_key))
@@ -388,12 +393,12 @@ const uint8_t* Msgpack::find_map_key(const msgpack_map &map, const std::string &
             std::string cpp_string = std::string(temp.data, temp.size);
 
             if (key == cpp_string)
-                return map.start + offset; // the location of the value in the key:value pair 
+                return start + offset; // the location of the value in the key:value pair
 
-        } else
-        {
-            offset += skip_object(map.start + offset);
         }
+
+        offset += skip_object(start + offset);
+        element_count++;
     }
 
     return nullptr;
@@ -728,48 +733,8 @@ size_t Msgpack::skip_array(const uint8_t* start, const size_t nmb_elements)
 
 Object Msgpack::get(const std::string &key) 
 {
-    if (*this->data == TYPE_MASK::MAP16) 
-    {
-        // map 16 stores a map whose length is upto (2^16)-1 elements
-        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
-        // |  0xde  |YYYYYYYY|YYYYYYYY|   N*2 objects   |
-        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
-
-        // index 1 to 2 represents the size of the  Map object which is stored at index 3 to 3 + SIZE.
-        
-        // uint16_t nmb_elements;
-        // std::memcpy(&nmb_elements, this->data + 1, 2);
-
-        // how to parse a map
-        // read a byte, resolve the type, 
-        // if type is string, check for equality with 'key'
-        // if not equal, skip forward to the next key
-        // uint8_t* value = find_map_key(this->data + 3, nmb_elements, key);
-
-    
-        // we will only be handling string keys at the moment
-        return Object();
-
-    }
-    else if (*this->data == TYPE_MASK::MAP32)
-    {
-        // map 32 stores a map whose length is upto (2^32)-1 elements
-        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
-        // |  0xdf  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|   N*2 objects   |
-        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
-        uint32_t size;
-        std::memcpy(&size, this->data + 1, 4);
-        
-
-        //find_key(start, end, )
-    } else
-    {
-        
-        // return exception
-        return Object();
-    }
-    
     return Object();
+
 }
 
 Object Msgpack::get(const int index)

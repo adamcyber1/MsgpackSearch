@@ -13,11 +13,6 @@
 
 namespace msgpacksearch {
 
-void test() {
-
-  std::cout<<"I must be working...or something. \n";
-}
-
   //TODO : implement the rest of the types
   /*
   enum TYPE {
@@ -134,6 +129,9 @@ class Msgpack {
 
   /// find the location of key:value in map, returns NULL if not found
   const uint8_t* find_map_key(const msgpack_map &map, const std::string &key);
+
+  /// find the location of key:value in map, return NULL if not found
+  const uint8_t* find_map_key(const uint8_t *start, const uint32_t nmb_elements, const std::string &key);
 
   FORMAT resolve_format(uint8_t byte);
 

@@ -1,5 +1,6 @@
 #include <utility>
 #include <variant>
+#include <string>
 
 #include <gtest/gtest.h>
 
@@ -180,7 +181,7 @@ TEST(find, find_map_key)
         "a" : 1
     }
     */
-    data = {0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x61, 0x01}; //map32
+    data = {0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x61, 0x01}; // map32
     auto [_read, obj] = msgpck.parse_data(data.data());
     msgpack_map map = std::get<msgpack_map>(obj);
 
@@ -195,9 +196,6 @@ TEST(find, find_map_key)
         "c" : 3,
         "d" : 4
     }
-
-
-
     */
 
     data = {0xDF, 0x00, 0x00, 0x00, 0x04, 0xA1, 0x61, 0x01, 0xA1, 0x62, 0x02, 0xA1, 0x63, 0x03, 0xA1, 0x64, 0x04}; //map32
@@ -210,10 +208,7 @@ TEST(find, find_map_key)
 
     value = msgpck.find_map_key(map, "c");
 
-    EXPECT_EQ(value, nullptr);
-
-
-
+    EXPECT_EQ(*value, 3);
 }
 
 TEST(config, second)
