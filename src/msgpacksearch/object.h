@@ -52,6 +52,13 @@ struct msgpack_array
     const uint8_t* start;
 };
 
+struct msgpack_ext {
+        msgpack_ext(int8_t type, uint32_t size, const uint8_t *data) : type(type), size(size), data(data) {}
+        int8_t type;
+        uint32_t size;
+        const uint8_t* data;
+    };
+
 typedef std::variant<std::monostate,
              bool, 
              uint64_t,
@@ -60,5 +67,6 @@ typedef std::variant<std::monostate,
              msgpack_array,
              msgpack_map,
              msgpack_bin,
-             msgpack_str> msgpack_object;
+             msgpack_str,
+             msgpack_ext> msgpack_object;
 }

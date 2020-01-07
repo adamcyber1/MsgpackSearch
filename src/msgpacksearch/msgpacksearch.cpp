@@ -75,7 +75,7 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         std::memcpy(&bin16_size, start + 1, sizeof(bin16_size));
                         bin16_size = __bswap_16(bin16_size);
 
-                        return std::make_pair<size_t, msgpack_object>((size_t)bin16_size, msgpack_bin(bin16_size, start + 3));
+                        return std::make_pair<size_t, msgpack_object>(3 + (size_t)bin16_size, msgpack_bin(bin16_size, start + 3));
 
                     }
                     case 0xc6: // bin 32
@@ -87,19 +87,47 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         std::memcpy(&bin32_size, start + 1, sizeof(bin32_size));
                         bin32_size = __bswap_32(bin32_size);
 
-                        return std::make_pair<size_t, msgpack_object>((size_t)bin32_size, msgpack_bin(bin32_size, start + 5));
+                        return std::make_pair<size_t, msgpack_object>(5 + (size_t)bin32_size, msgpack_bin(bin32_size, start + 5));
                     }
                     case 0xc7: // ext 8
                     {
+                        // +--------+--------+--------+========+
+                        // |  0xc7  |XXXXXXXX|  type  |  data  |
+                        // +--------+--------+--------+========+
 
+                        uint8_t size = *(start + 1);
+                        int8_t type = *(start + 2);
+
+                        return std::make_pair<size_t, msgpack_object>(3 + (size_t)size, msgpack_ext(type, size, start + 3));
 
                     }
                     case 0xc8: // ext 16
                     {
+                        // +--------+--------+--------+--------+========+
+                        // |  0xc8  |YYYYYYYY|YYYYYYYY|  type  |  data  |
+                        // +--------+--------+--------+--------+========+
+
+                        uint16_t size;
+                        int8_t type = *(start + 3);
+                        std::memcpy(&size, start + 1, sizeof(size));
+                        size = __bswap_16(size);
+
+                        return std::make_pair<size_t, msgpack_object>(4 + (size_t)size, msgpack_ext(type, size, start + 4));
 
                     }
                     case 0xc9: // ext 32
                     {
+                        // +--------+--------+--------+--------+--------+--------+========+
+                        // |  0xc9  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|  type  |  data  |
+                        // +--------+--------+--------+--------+--------+--------+========+
+
+                        uint32_t size;
+                        int8_t type = *(start + 5);
+                        std::memcpy(&size, start + 1, sizeof(size));;
+                        size = __bswap_32(size);
+
+                        return std::make_pair<size_t, msgpack_object>(6 + (size_t)size, msgpack_ext(type, size, start + 6));
+
 
                     }
                     case 0xca:  // float
@@ -108,12 +136,16 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                         // |  0xca  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
                         // +--------+--------+--------+--------+--------+
 
+                        // ??
+
                     }
                     case 0xcb:  // double
                     {
                         // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
                         // |  0xcb  |YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|
                         // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+
+                        // ?
 
                     }
                     case 0xcc:  // unsigned int  8
@@ -212,22 +244,39 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
                     case 0xd4:  // fixext 1
                     {
 
+                        // +--------+--------+--------+
+                        // |  0xd4  |  type  |  data  |
+                        // +--------+--------+--------+
+                        return std::make_pair<size_t, msgpack_ext>(3, msgpack_ext(*(start + 1), 1, start + 2));
+
                     }
                     case 0xd5:  // fixext 2
                     {
-
+                        // +--------+--------+--------+--------+
+                        // |  0xd5  |  type  |       data      |
+                        // +--------+--------+--------+--------+
+                        return std::make_pair<size_t, msgpack_ext>(4, msgpack_ext(*(start + 1), 2, start + 2));
                     }
                     case 0xd6:  // fixext 4
                     {
-
+                        // +--------+--------+--------+--------+--------+--------+
+                        // |  0xd6  |  type  |                data               |
+                        // +--------+--------+--------+--------+--------+--------+
+                        return std::make_pair<size_t, msgpack_ext>(6, msgpack_ext(*(start + 1), 4, start + 2));
                     }
                     case 0xd7:  // fixext 8
                     {
-
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xd7  |  type  |                                  data                                 |
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        return std::make_pair<size_t, msgpack_ext>(10, msgpack_ext(*(start + 1), 8, start + 2));
                     }
                     case 0xd8:  // fixext 16
                     {
-
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xd8  |  type  |                                  data                                 ...
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        return std::make_pair<size_t, msgpack_ext>(17, msgpack_ext(*(start + 1), 16, start + 2));
                     }
 
                     case 0xd9:  // str 8
@@ -473,15 +522,34 @@ size_t Msgpack::skip_object(const uint8_t* start)
                     }
                     case 0xc7: // ext 8
                     {
-
-
+                        // +--------+--------+--------+========+
+                        // |  0xc7  |XXXXXXXX|  type  |  data  |
+                        // +--------+--------+--------+========+
+                        return 3 + *(start + 1);
                     }
                     case 0xc8: // ext 16
                     {
+                        // +--------+--------+--------+--------+========+
+                        // |  0xc8  |YYYYYYYY|YYYYYYYY|  type  |  data  |
+                        // +--------+--------+--------+--------+========+
 
+                        uint16_t size;
+                        std::memcpy(&size, start + 1, sizeof(size));;
+                        size = __bswap_16(size);
+
+                        return 4 + size;
                     }
                     case 0xc9: // ext 32
                     {
+                        // +--------+--------+--------+--------+--------+--------+========+
+                        // |  0xc9  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|  type  |  data  |
+                        // +--------+--------+--------+--------+--------+--------+========+
+
+                        uint32_t size;
+                        std::memcpy(&size, start + 1, sizeof(size));;
+                        size = __bswap_32(size);
+
+                        return 5 + size;
 
                     }
                     case 0xca:  // float
@@ -489,6 +557,8 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // +--------+--------+--------+--------+--------+
                         // |  0xca  |XXXXXXXX|XXXXXXXX|XXXXXXXX|XXXXXXXX|
                         // +--------+--------+--------+--------+--------+
+
+                        return 5;
 
 
                     }
@@ -498,6 +568,7 @@ size_t Msgpack::skip_object(const uint8_t* start)
                         // |  0xcb  |YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|YYYYYYYY|
                         // +--------+--------+--------+--------+--------+--------+--------+--------+--------+
 
+                        return 9;
 
 
                     }
@@ -568,23 +639,40 @@ size_t Msgpack::skip_object(const uint8_t* start)
                     }
                     case 0xd4:  // fixext 1
                     {
+                        // +--------+--------+--------+
+                        // |  0xd4  |  type  |  data  |
+                        // +--------+--------+--------+
 
+                        return 3;
                     }
                     case 0xd5:  // fixext 2
                     {
-
+                        // +--------+--------+--------+--------+
+                        // |  0xd5  |  type  |       data      |
+                        // +--------+--------+--------+--------+
+                        return 4;
                     }
                     case 0xd6:  // fixext 4
                     {
-
+                        // +--------+--------+--------+--------+--------+--------+
+                        // |  0xd6  |  type  |                data               |
+                        // +--------+--------+--------+--------+--------+--------+
+                        return 6;
                     }
                     case 0xd7:  // fixext 8
                     {
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xd7  |  type  |                                  data                                 |
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        return 10;
 
                     }
                     case 0xd8:  // fixext 16
                     {
-
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        // |  0xd8  |  type  |                                  data                                 ...
+                        // +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+                        return 18;
                     }
 
                     case 0xd9:  // str 8
@@ -729,7 +817,7 @@ size_t Msgpack::skip_array(const uint8_t* start, const size_t nmb_elements)
     return offset;
 }
 
-Object Msgpack::get(const std::string &key) 
+msgpack_object Msgpack::get(const std::string &key)
 {
     uint32_t nmb_elements;
     uint8_t *map_data;
@@ -761,17 +849,20 @@ Object Msgpack::get(const std::string &key)
         }
         default:
         {
-            return Object();
+            return msgpack_object();
         }
     }
 
-    // uint8_t *value = find_map_key()
+     const uint8_t *value = find_map_key(map_data, nmb_elements, key);
 
-    return Object();
+    if (value)
+        return parse_data(value).second;
+
+    return msgpack_object();
 
 }
 
-Object Msgpack::get(const int index)
+msgpack_object Msgpack::get(const int index)
 {
     if (*this->data ==  TYPE_MASK::ARRAY16) 
     {
@@ -786,17 +877,16 @@ Object Msgpack::get(const int index)
         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
         // |  0xdd  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N objects    |
         // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
-        
 
         //find_key(start, end, )
     } else
     {
         
         // return exception
-        return Object();
+        return msgpack_object();
     }
     
-    return Object();
+    return msgpack_object();
 }
 
 

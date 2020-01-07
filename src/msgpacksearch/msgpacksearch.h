@@ -122,10 +122,10 @@ class Msgpack {
   /// Msgpack(Msgpack const && other) = delete;
 
   /// Key based search of an Object
-  Object get(const std::string &key);
+  msgpack_object get(const std::string &key);
 
   /// Index based search of an array
-  Object get(const int index);
+  msgpack_object get(const int index);
 
   /// find the location of key:value in map, returns NULL if not found
   const uint8_t* find_map_key(const msgpack_map &map, const std::string &key);
