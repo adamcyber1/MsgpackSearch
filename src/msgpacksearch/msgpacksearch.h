@@ -133,8 +133,8 @@ class Msgpack {
   /// find the location of key:value in map, return NULL if not found
   const uint8_t* find_map_key(const uint8_t *start, const uint32_t nmb_elements, const std::string &key);
 
-  FORMAT resolve_format(uint8_t byte);
-
+  const uint8_t* find_array_index(const msgpack_array &array, const uint32_t index);
+  const uint8_t* find_array_index(const uint8_t *start, const uint32_t nmb_elements, const uint32_t index);
   /// skips an element pointed to by start. Returns the number of bytes skipped
   size_t skip_object(const uint8_t* start);
 
@@ -146,15 +146,6 @@ class Msgpack {
 
   // parses an element, returning the number of bytes read and the element
   std::pair<size_t, msgpack_object> parse_data(const uint8_t* start);
-  
-
-  /* How should the data ownership be handled....
-  * 
-  * Case 1: Msgpack doesn't own the underlying data and can only read it. This is unsafe if the data that mspack points to is deallocated....is this acceptable? Can the lifetime
-  * of the data be tracked somehow? Msgpack_view ?  USE SHARED_PTR
-  * 
-  * Case 2: Mspack owns the underlying data, obtained either via move or copy. Read and write is allowed.
-  */
 
   const uint8_t *data;
   const size_t size;

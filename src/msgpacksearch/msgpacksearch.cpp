@@ -128,7 +128,6 @@ std::pair<size_t, msgpack_object> Msgpack::parse_data(const uint8_t* start)
 
                         return std::make_pair<size_t, msgpack_object>(6 + (size_t)size, msgpack_ext(type, size, start + 6));
 
-
                     }
                     case 0xca:  // float
                     {
@@ -451,6 +450,28 @@ const uint8_t* Msgpack::find_map_key(const uint8_t *start, const uint32_t nmb_el
     }
 
     return nullptr;
+}
+
+const uint8_t* Msgpack::find_array_index(const msgpack_array &array, const uint32_t index)
+{
+    return find_array_index(array.start, array.nmb_elements, index);
+}
+
+const uint8_t* Msgpack::find_array_index(const uint8_t *start, const uint32_t nmb_elements, const uint32_t index)
+{
+    if (index >= nmb_elements)
+        return nullptr;
+
+    uint32_t element_count = 0;
+    size_t offset = 0;
+
+    while (element_count != index)
+    {
+        offset += skip_object(start + offset);
+        element_count++;
+    }
+
+    return start + offset;
 }
 
 size_t Msgpack::skip_object(const uint8_t* start)
@@ -853,7 +874,7 @@ msgpack_object Msgpack::get(const std::string &key)
         }
     }
 
-     const uint8_t *value = find_map_key(map_data, nmb_elements, key);
+    const uint8_t *value = find_map_key(map_data, nmb_elements, key);
 
     if (value)
         return parse_data(value).second;
@@ -864,28 +885,45 @@ msgpack_object Msgpack::get(const std::string &key)
 
 msgpack_object Msgpack::get(const int index)
 {
-    if (*this->data ==  TYPE_MASK::ARRAY16) 
-    {
-        // array 16 stores an array whose length is upto (2^16)-1 elements:
-        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
-        // |  0xdc  |YYYYYYYY|YYYYYYYY|    N objects    |
-        // +--------+--------+--------+~~~~~~~~~~~~~~~~~+
-    }
-    else if (*this->data == TYPE_MASK::ARRAY32)
-    {
-        // array 32 stores an array whose length is upto (2^32)-1 elements:
-        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
-        // |  0xdd  |ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|ZZZZZZZZ|    N objects    |
-        // +--------+--------+--------+--------+--------+~~~~~~~~~~~~~~~~~+
+    uint32_t nmb_elements;
+    uint8_t *array_data;
 
-        //find_key(start, end, )
-    } else
+    switch (*this->data)
     {
-        
-        // return exception
-        return msgpack_object();
+        case 0x90 ... 0x9f:
+        {
+            nmb_elements = (uint32_t)(*this->data & 0b00001111);
+            array_data = const_cast<uint8_t* >(this->data) + 1;
+            break;
+        }
+        case TYPE_MASK::ARRAY16:
+        {
+            uint16_t temp;
+            std::memcpy(&temp, this->data + 1, sizeof(temp));
+            temp = __bswap_16(temp);
+            nmb_elements = (uint32_t) temp;
+            array_data = const_cast<uint8_t* >(this->data) + 3;
+            break;
+
+        }
+        case TYPE_MASK::ARRAY32:
+        {
+            std::memcpy(&nmb_elements, this->data + 1, sizeof(nmb_elements));
+            nmb_elements = __bswap_32(nmb_elements);
+            array_data = const_cast<uint8_t* >(this->data)+ 5;
+            break;
+        }
+        default:
+        {
+            return msgpack_object();
+        }
     }
-    
+
+    const uint8_t *value = find_array_index(array_data, nmb_elements, index);
+
+    if (value)
+        return parse_data(value).second;
+
     return msgpack_object();
 }
 
