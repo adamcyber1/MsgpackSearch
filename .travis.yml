@@ -20,15 +20,12 @@ script:
   - export CC=/usr/bin/gcc-9
   - export CXX=/usr/bin/g++-9
   - gcc -v && g++ -v && cmake --version
-
   #install libgit2
   - sudo apt-get install -y libgit2-dev
   #install gtest
   sudo apt-get install libgtest-dev
-
   #DEBUG view current dir
   - ls -al
-
   # build project
   - mkdir build && cd build
   - cmake ..
