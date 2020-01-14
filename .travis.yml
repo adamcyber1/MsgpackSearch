@@ -23,7 +23,7 @@ script:
   #install libgit2
   - sudo apt-get install -y libgit2-dev
   #install gtest
-  sudo apt-get install libgtest-dev
+  - sudo apt-get install libgtest-dev
   #DEBUG view current dir
   - ls -al
   # build project
