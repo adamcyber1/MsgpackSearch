@@ -22,4 +22,4 @@ script:
   - gcc -v && g++ -v && cmake --version
 
   #install libgit2
-  - apt-get install -y libgit2-dev
+  - sudo apt-get install -y libgit2-dev
