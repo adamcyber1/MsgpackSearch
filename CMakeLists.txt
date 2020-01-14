@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-cmake_policy(VERSION 3.10)
+cmake_minimum_required(VERSION 3.9)
+cmake_policy(VERSION 3.9)
 
 if (NOT (UNIX))
   message(FATAL_ERROR "unsupported target platform...windows isn't supported yet")
