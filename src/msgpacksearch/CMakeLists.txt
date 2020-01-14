@@ -5,7 +5,7 @@ set(SOURCE_FILES
     msgpacksearch.h
     msgpacksearch.cpp
     object.h
-)
+        error.h)
 
 add_library(msgpacksearch ${SOURCE_FILES})
 

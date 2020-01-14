@@ -5,7 +5,7 @@ enable_testing()
 find_package(Gtest REQUIRED)
 
 add_executable(msgpacksearch_unittest
-        test_msgpacksearch.cpp)
+        test_msgpacksearch.cpp ../src/msgpacksearch/error.h)
 
 target_link_libraries(msgpacksearch_unittest PUBLIC
         msgpacksearch

@@ -1,8 +1,10 @@
 #include "msgpacksearch.h"
+#include "error.h"
 
 #include <cstring>
 #include <iostream>
 #include <bits/byteswap.h>
+#include <stdexcept>
 
 namespace msgpacksearch
 {
@@ -840,6 +842,26 @@ size_t Msgpack::skip_array(const uint8_t* start, const size_t nmb_elements)
 
 msgpack_object Msgpack::get(const std::string &key)
 {
+    try {
+        return this->operator[](key);
+    } catch (...)
+    {
+        return msgpack_object();
+    }
+}
+
+msgpack_object Msgpack::get(const int index)
+{
+    try {
+        return this->operator[](index);
+    } catch (...)
+    {
+        return msgpack_object();
+    }
+}
+
+msgpack_object Msgpack::operator[](const std::string &key)
+{
     uint32_t nmb_elements;
     uint8_t *map_data;
 
@@ -870,7 +892,7 @@ msgpack_object Msgpack::get(const std::string &key)
         }
         default:
         {
-            return msgpack_object();
+            throw bad_object_type("Expected a map, found something else.\n");
         }
     }
 
@@ -881,9 +903,9 @@ msgpack_object Msgpack::get(const std::string &key)
 
     return msgpack_object();
 
-}
 
-msgpack_object Msgpack::get(const int index)
+}
+msgpack_object Msgpack::operator[](const int index)
 {
     uint32_t nmb_elements;
     uint8_t *array_data;
@@ -915,9 +937,12 @@ msgpack_object Msgpack::get(const int index)
         }
         default:
         {
-            return msgpack_object();
+            throw bad_object_type("Expected an array, found something else...");
         }
     }
+
+    if (index >= nmb_elements)
+        throw std::out_of_range("Index exceeds the size of the array");
 
     const uint8_t *value = find_array_index(array_data, nmb_elements, index);
 
@@ -925,6 +950,7 @@ msgpack_object Msgpack::get(const int index)
         return parse_data(value).second;
 
     return msgpack_object();
+
 }
 
 

@@ -10,7 +10,6 @@
 
 #include "object.h"
 
-
 namespace msgpacksearch {
 
   //TODO : implement the rest of the types
@@ -120,6 +119,12 @@ class Msgpack {
 
   /// Move constructor
   /// Msgpack(Msgpack const && other) = delete;
+
+  /// Key access of a map
+  msgpack_object operator[](const std::string &key);
+
+  /// index access of an array
+  msgpack_object operator[](const int index);
 
   /// Key based search of an Object
   msgpack_object get(const std::string &key);
