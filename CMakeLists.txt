@@ -20,7 +20,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -O0 -Wall -fPIC")
 
 # options
 option(BUILD_SHARED_LIBS "Build shared library" ON)
-option(BUILD_TESTS "Build Tests" ON)
+option(BUILD_TESTS "Build Tests" OFF)
 
 if(BUILD_SHARED_LIBS)
     message("BUILD_SHARED_LIBS: ON")
@@ -32,7 +32,6 @@ if(BUILD_TESTS)
     enable_testing()
     message("BUILD_TESTS: ON")
 else()
-    enable_testing()
     message("BUILD_TESTS: OFF")
 endif()
 
