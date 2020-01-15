@@ -12,6 +12,17 @@ addons:
       - gcc-9
       - g++-9
       - cmake
+      -
+before_install:
+  - sudo apt-get install -y libgtest-dev cmake
+  - sudo wget https://github.com/google/googletest/archive/release-1.10.0.tar.gz
+  - sudo tar xf release-1.10.0.tar.gz
+  - cd googletest-release-1.10.0
+  - sudo cmake -DBUILD_SHARED_LIBS=ON .
+  - sudo make -j
+  - sudo cp -a include/gtest /usr/include
+  - sudo cp -a libgtest_main.so libgtest.so /usr/lib/
+  - cd "${TRAVIS_BUILD_DIR}"
 
 script:
   - sudo ln -s /usr/bin/gcc-9 /usr/local/bin/gcc
@@ -22,8 +33,6 @@ script:
   - gcc -v && g++ -v && cmake --version
   #install libgit2
   - sudo apt-get install -y libgit2-dev
-  #install gtest
-  - sudo apt-get install libgtest-dev
   #DEBUG view current dir
   - ls -al
   # build project
