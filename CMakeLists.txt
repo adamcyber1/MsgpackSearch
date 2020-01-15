@@ -49,4 +49,6 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 add_subdirectory(src)
 
-add_subdirectory(test)
+if(BUILD_TESTS)
+    add_subdirectory(test)
+endif()
