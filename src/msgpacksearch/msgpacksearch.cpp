@@ -9,7 +9,7 @@
 namespace msgpacksearch
 {
 
-Msgpack::Msgpack(const uint8_t *data, size_t length) : data(data), size(length), offset(0) {}
+Msgpack::Msgpack(const uint8_t *data, size_t length) : _data(data), _size(length), _offset(0) {}
 
 Msgpack::Msgpack(const char *data, size_t length) : Msgpack((uint8_t *)data, length) {}
 
@@ -865,29 +865,29 @@ msgpack_object Msgpack::operator[](const std::string &key)
     uint32_t nmb_elements;
     uint8_t *map_data;
 
-    switch (*this->data)
+    switch (*this->_data)
     {
         case 0x80 ... 0x8f:
         {
-            nmb_elements = (uint32_t)(*this->data & 0b00001111);
-            map_data = const_cast<uint8_t* >(this->data) + 1;
+            nmb_elements = (uint32_t)(*this->_data & 0b00001111);
+            map_data = const_cast<uint8_t* >(this->_data) + 1;
             break;
         }
         case TYPE_MASK::MAP16:
         {
             uint16_t temp;
-            std::memcpy(&temp, this->data + 1, sizeof(temp));
+            std::memcpy(&temp, this->_data + 1, sizeof(temp));
             temp = __bswap_16(temp);
             nmb_elements = (uint32_t) temp;
-            map_data = const_cast<uint8_t* >(this->data) + 3;
+            map_data = const_cast<uint8_t* >(this->_data) + 3;
             break;
 
         }
         case TYPE_MASK::MAP32:
         {
-            std::memcpy(&nmb_elements, this->data + 1, sizeof(nmb_elements));
+            std::memcpy(&nmb_elements, this->_data + 1, sizeof(nmb_elements));
             nmb_elements = __bswap_32(nmb_elements);
-            map_data = const_cast<uint8_t* >(this->data)+ 5;
+            map_data = const_cast<uint8_t* >(this->_data) + 5;
             break;
         }
         default:
@@ -910,29 +910,29 @@ msgpack_object Msgpack::operator[](const int index)
     uint32_t nmb_elements;
     uint8_t *array_data;
 
-    switch (*this->data)
+    switch (*this->_data)
     {
         case 0x90 ... 0x9f:
         {
-            nmb_elements = (uint32_t)(*this->data & 0b00001111);
-            array_data = const_cast<uint8_t* >(this->data) + 1;
+            nmb_elements = (uint32_t)(*this->_data & 0b00001111);
+            array_data = const_cast<uint8_t* >(this->_data) + 1;
             break;
         }
         case TYPE_MASK::ARRAY16:
         {
             uint16_t temp;
-            std::memcpy(&temp, this->data + 1, sizeof(temp));
+            std::memcpy(&temp, this->_data + 1, sizeof(temp));
             temp = __bswap_16(temp);
             nmb_elements = (uint32_t) temp;
-            array_data = const_cast<uint8_t* >(this->data) + 3;
+            array_data = const_cast<uint8_t* >(this->_data) + 3;
             break;
 
         }
         case TYPE_MASK::ARRAY32:
         {
-            std::memcpy(&nmb_elements, this->data + 1, sizeof(nmb_elements));
+            std::memcpy(&nmb_elements, this->_data + 1, sizeof(nmb_elements));
             nmb_elements = __bswap_32(nmb_elements);
-            array_data = const_cast<uint8_t* >(this->data)+ 5;
+            array_data = const_cast<uint8_t* >(this->_data) + 5;
             break;
         }
         default:
@@ -951,6 +951,20 @@ msgpack_object Msgpack::operator[](const int index)
 
     return msgpack_object();
 
+}
+
+const uint8_t *Msgpack::data()
+{
+        return this->_data;
+}
+const size_t Msgpack::offset()
+{
+        return this->_offset;
+}
+
+const size_t Msgpack::size()
+{
+        return this->_size;
 }
 
 
