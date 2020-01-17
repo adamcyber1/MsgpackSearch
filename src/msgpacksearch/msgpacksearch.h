@@ -8,117 +8,25 @@
 #include <string>
 #include <utility>
 
-#include "object.h"
+#include "types.h"
 
 namespace msgpacksearch {
 
-  //TODO : implement the rest of the types
-  /*
-  enum TYPE {
-        STR8 = 0xd9,
-        STR16 = 0xda,
-        STR32 = 0xdb,
-        ARRAY16 = 0xdc,
-        ARRAY32 = 0xdd,
-        MAP16 = 0xde,
-        MAP32 = 0xdf
-  };
-  */
-
-  enum FORMAT {
-      NIL               = 0x00,
-      TRUE              = 0x01,
-      FALSE             = 0x02,
-      BIN_8             = 0x03,
-      BIN_16            = 0x04,
-      BIN_32            = 0x05,
-      EXT_8             = 0x06,
-      EXT_16            = 0x07,
-      EXT_32            = 0x09,
-      FLOAT_32          = 0x0A,
-      FLOAT_64          = 0x0B,
-      UINT_8            = 0x0C,
-      UINT_16           = 0x0D,
-      UINT_32           = 0x0E,
-      UINT_64           = 0x0F,
-      INT_8             = 0x10,
-      INT_16            = 0x11,
-      INT_32            = 0x12,
-      INT_64            = 0x13,
-      FIXEXT_1          = 0x14,
-      FIXEXT_2          = 0x15,
-      FIXEXT_4          = 0x16,
-      FIXEXT_8          = 0x17,
-      FIXEXT_16         = 0x18,
-      STR_8             = 0X19,
-      STR_16            = 0X1A,
-      STR_32            = 0X1B,
-      ARRAY_16          = 0X1C,
-      ARRAY_32          = 0X1D,
-      MAP_16            = 0X1E,
-      MAP_32            = 0X1F,
-      POS_FIXINT        = 0x20,
-      NEG_FIXINT        = 0x21,
-      FIX_MAP           = 0x22,
-      FIX_ARRAY         = 0x23,
-      FIX_STR           = 0x24
-  };
-
-  enum TYPE_MASK {
-    MAP16 = 0xde,
-    MAP32 = 0xdf,
-    ARRAY16 = 0xdc,
-    ARRAY32 = 0xdd,
-    STR8   = 0xd9,
-    STR16  = 0xda,
-    STR32 = 0xdb  
-  };
-
-  struct FormatInfo
-  {
-    FormatInfo() = default;
-    FormatInfo(size_t size, FORMAT format) : size(size), format(format) {}
-
-    size_t size; // 
-    FORMAT format;
-    uint8_t *data; // pointer to where the data starts
-  };
-
-  class MsgpackObject
-  {
-  public:
-  MsgpackObject() = default;
-
-  const uint8_t *start;
-  FORMAT format;
-  };
-
-  typedef std::variant<std::monostate, std::string> Object;
 
 /// @brief Thin wrapper class for reading msgpack data. Read only. Probably will be called Msgpack_View in the near future.
 class Msgpack {
   
   public:
 
-  /// Default constructor
   Msgpack() : data(nullptr), size(0), offset(0) {}
-
-  /// Construct from std::vector
   explicit Msgpack(const std::vector<uint8_t> &data); 
   explicit Msgpack(const std::vector<char> &data);
-
-  /// Construct from pointer and size
   explicit Msgpack(const uint8_t *data, size_t length);
   explicit Msgpack(const char *data, size_t length);
+  explicit Msgpack(const Msgpack &other) = default;
 
-  /// Copy constructor
-  Msgpack(const Msgpack &other) = default;
-
-  /// Copy Assignment Operator
   Msgpack& operator=(const Msgpack &other) = default;
-
-  /// Move constructor
-  /// Msgpack(Msgpack const && other) = delete;
+  Msgpack(Msgpack const && other) = delete;
 
   /// Key access of a map
   msgpack_object operator[](const std::string &key);
