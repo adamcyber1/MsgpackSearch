@@ -12,7 +12,6 @@ addons:
       - gcc-9
       - g++-9
       - cmake
-      - libgtest-dev
 script:
   - sudo ln -s /usr/bin/gcc-9 /usr/local/bin/gcc
   - sudo ln -s /usr/bin/g++-9 /usr/local/bin/g++

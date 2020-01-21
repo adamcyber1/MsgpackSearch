@@ -6,7 +6,6 @@
 
 namespace msgpacksearch {
 
-// TODO add more information. i.e. the expected type, the offset it occured, etc...
 class bad_object_type : public std::exception {
 
 public:

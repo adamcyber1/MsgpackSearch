@@ -5,6 +5,7 @@
 #include <iostream>
 #include <bits/byteswap.h>
 #include <stdexcept>
+#include <string_view>
 
 namespace msgpacksearch
 {
@@ -850,6 +851,89 @@ msgpack_object Msgpack::get(const std::string &key)
     }
 }
 
+std::string_view Msgpack::get_sv(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+        auto str_temp = std::get<msgpack_str>(object);
+        return std::string_view(str_temp.data, str_temp.size);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not a string");
+    }
+}
+
+int Msgpack::get_int(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+
+        return std::get<uint64_t >(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an int");
+    }
+}
+
+bool Msgpack::get_bool(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+
+        return std::get<bool>(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an bool");
+    }
+}
+
+msgpack_map Msgpack::get_map(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+
+        return std::get<msgpack_map>(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an map");
+    }
+}
+
+msgpack_array Msgpack::get_array(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+
+        return std::get<msgpack_array >(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an array");
+    }
+}
+
+msgpack_bin Msgpack::get_bin(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+
+        return std::get<msgpack_bin>(object);
+    } catch (...) {
+        throw bad_object_type("Msgpack object is not raw binary");
+    }
+}
+
+msgpack_ext Msgpack::get_ext(const std::string &key)
+{
+    try {
+        auto object = this->operator[](key);
+
+        return std::get<msgpack_ext>(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an extended type");
+    }
+}
+
 msgpack_object Msgpack::get(const int index)
 {
     try {
@@ -857,6 +941,88 @@ msgpack_object Msgpack::get(const int index)
     } catch (...)
     {
         return msgpack_object();
+    }
+}
+
+std::string_view Msgpack::get_sv(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+        auto str_temp = std::get<msgpack_str>(object);
+        return std::string_view(str_temp.data, str_temp.size);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not a string");
+    }
+}
+
+int Msgpack::get_int(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+
+        return std::get<uint64_t >(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an int");
+    }
+}
+
+bool Msgpack::get_bool(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+
+        return std::get<bool>(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an bool");
+    }
+}
+
+msgpack_map Msgpack::get_map(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+
+        return std::get<msgpack_map>(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an map");
+    }
+}
+
+msgpack_array Msgpack::get_array(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+
+        return std::get<msgpack_array >(object);
+    } catch (...)
+    {
+        throw bad_object_type("Msgpack object is not an array");
+    }
+}
+
+msgpack_bin Msgpack::get_bin(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+
+        return std::get<msgpack_bin>(object);
+    } catch (...) {
+        throw bad_object_type("Msgpack object is not raw binary");
+    }
+}
+
+msgpack_ext Msgpack::get_ext(const int index)
+{
+    try {
+        auto object = this->operator[](index);
+
+        return std::get<msgpack_ext>(object);
+    } catch (...) {
+        throw bad_object_type("Msgpack object is not an extended type");
     }
 }
 
@@ -905,6 +1071,7 @@ msgpack_object Msgpack::operator[](const std::string &key)
 
 
 }
+
 msgpack_object Msgpack::operator[](const int index)
 {
     uint32_t nmb_elements;
@@ -957,6 +1124,7 @@ const uint8_t *Msgpack::data()
 {
         return this->_data;
 }
+
 const size_t Msgpack::offset()
 {
         return this->_offset;
