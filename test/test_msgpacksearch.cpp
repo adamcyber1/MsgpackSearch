@@ -3,8 +3,10 @@
 #include <string>
 
 #include <gtest/gtest.h>
+#include <error.h>
 
 #include "msgpacksearch/msgpacksearch.h"
+
 
 using namespace msgpacksearch;
 
@@ -211,7 +213,61 @@ TEST(find, find_map_key)
     EXPECT_EQ(*value, 3);
 }
 
-TEST(config, second)
+TEST(get, Maps)
 {
-    EXPECT_EQ(1, 1);
+    /*
+    {
+        "a" : 1
+    }
+    */
+    std::vector<uint8_t> data = {0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 0x61, 0x01}; // map32
+    Msgpack msgpck(data.data(), data.size());
+
+    {
+        auto val_variant = msgpck.get("a");
+        int res = std::get<uint64_t>(val_variant);
+        EXPECT_EQ(1, res);
+    }
+
+    {
+        auto val = msgpck.get_int("a");
+        EXPECT_EQ(1, val);
+    }
+
+    {
+        auto val = msgpck.get("b");
+        EXPECT_EQ(std::monostate(), std::get<std::monostate>(val));
+    }
+
+    {
+        EXPECT_THROW(msgpck.get_sv("a"), msgpacksearch::bad_object_type);
+    }
+}
+
+TEST(get, Arrays)
+{
+    // [1, 2, 3]
+    std::vector<uint8_t> data = {0xDD, 0x00, 0x00, 0x00, 0x03, 0x01, 0x02, 0x03}; // array32
+    Msgpack msgpck(data.data(), data.size());
+
+    {
+        auto val_variant = msgpck.get(0);
+        int res = std::get<uint64_t>(val_variant);
+        EXPECT_EQ(1, res);
+    }
+
+    {
+        auto val = msgpck.get_int(1);
+        EXPECT_EQ(2, val);
+    }
+
+    {
+        auto val = msgpck.get(4);
+        EXPECT_EQ(std::monostate(), std::get<std::monostate>(val));
+    }
+
+    {
+        EXPECT_THROW(msgpck.get_sv(2), msgpacksearch::bad_object_type);
+    }
+
 }

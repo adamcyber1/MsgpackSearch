@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <variant>
 
@@ -9,63 +11,6 @@ enum TYPE_MASK {
     MAP32 = 0xdf,
     ARRAY16 = 0xdc,
     ARRAY32 = 0xdd,
-    STR8   = 0xd9,
-    STR16  = 0xda,
-    STR32 = 0xdb
-};
-
-enum msgpack_object_type{
-    MSGPACK_OBJECT_NIL                  = 0x00,
-    MSGPACK_OBJECT_BOOLEAN              = 0x01,
-    MSGPACK_OBJECT_POSITIVE_INTEGER     = 0x02,
-    MSGPACK_OBJECT_NEGATIVE_INTEGER     = 0x03,
-    MSGPACK_OBJECT_FLOAT32              = 0x0a,
-    MSGPACK_OBJECT_FLOAT64              = 0x04,
-    MSGPACK_OBJECT_FLOAT                = 0x04,
-    MSGPACK_OBJECT_STR                  = 0x05,
-    MSGPACK_OBJECT_ARRAY                = 0x06,
-    MSGPACK_OBJECT_MAP                  = 0x07,
-    MSGPACK_OBJECT_BIN                  = 0x08,
-    MSGPACK_OBJECT_EXT                  = 0x09
-};
-
-enum FORMAT {
-    NIL               = 0x00,
-    TRUE              = 0x01,
-    FALSE             = 0x02,
-    BIN_8             = 0x03,
-    BIN_16            = 0x04,
-    BIN_32            = 0x05,
-    EXT_8             = 0x06,
-    EXT_16            = 0x07,
-    EXT_32            = 0x09,
-    FLOAT_32          = 0x0A,
-    FLOAT_64          = 0x0B,
-    UINT_8            = 0x0C,
-    UINT_16           = 0x0D,
-    UINT_32           = 0x0E,
-    UINT_64           = 0x0F,
-    INT_8             = 0x10,
-    INT_16            = 0x11,
-    INT_32            = 0x12,
-    INT_64            = 0x13,
-    FIXEXT_1          = 0x14,
-    FIXEXT_2          = 0x15,
-    FIXEXT_4          = 0x16,
-    FIXEXT_8          = 0x17,
-    FIXEXT_16         = 0x18,
-    STR_8             = 0X19,
-    STR_16            = 0X1A,
-    STR_32            = 0X1B,
-    ARRAY_16          = 0X1C,
-    ARRAY_32          = 0X1D,
-    MAP_16            = 0X1E,
-    MAP_32            = 0X1F,
-    POS_FIXINT        = 0x20,
-    NEG_FIXINT        = 0x21,
-    FIX_MAP           = 0x22,
-    FIX_ARRAY         = 0x23,
-    FIX_STR           = 0x24
 };
 
 /**
