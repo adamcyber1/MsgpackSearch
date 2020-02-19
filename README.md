@@ -1,6 +1,6 @@
 MsgpackSearch
 ====================================
-[![Build Status](https://travis-ci.com/adamfill28/MsgpackSearch.svg?token=W9zuzwEoz6cKPPLYczY3&branch=master)](https://travis-ci.com/adamfill28/MsgpackSearch)
+[![Build Status](https://travis-ci.com/adamfillion/MsgpackSearch.svg?token=W9zuzwEoz6cKPPLYczY3&branch=master)](https://travis-ci.com/adamfillion/MsgpackSearch)
 
 This library provides a JSON-like interface for serialized Msgpack data.
 
