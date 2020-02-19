@@ -11,19 +11,21 @@ Any [feedback][mail] (*especially results of testing*) is highly appreciated!
 Features
 ========
 
-Interact with msgpack data as if it was JSON, eliminating the need to deserialize the data to make it searchable.
+Interact with msgpack data as if it was JSON, eliminating the need to deserialize the data to make it searchable. This is
+particularly useful when large blobs of Msgpack are only needed for a low number of key/index accesses. 
 
 - Getter functions operate on the raw bytes - no copies required.
-- Setter functions ...........
 
 Examples
 =======
 
 ```cpp
 
-#include <msgpacksearch.hpp>
+#include <msgpacksearch.h>
 #include <vector>
 #include <string>
+
+using namespace msgpacksearch;
 
 int main()
 {
@@ -44,35 +46,24 @@ int main()
                         04
    */
 
-   std::vector<uint8_t> data = {}; //TODO populate with serialized msgpack
 
    /*  Construction
    * 
    *   Msgpack class is a thin wrapper around the raw bytes and does not require ownership.
    */
-   Msgpacksearch::Msgpack msgpack_data(data); 
+   Msgpacksearch::Msgpack msgpack_data(buffer); 
 
    /* Getters
    * 
    * Should support operator[] syntax, as well as .get() functions. Access errors should be handled via throws (in the case of []) or null returns (in the case of .get())
-   * 
    */
-   Msgpacksearch::Value value = msgpack_data["A"]; // returns std::variant with current alternative type 'std::string' and value "hello"
-   Msgpacksearch::Value::Type type = value.type(); // returns enum type Mspacksearch::Value::Type::String via std::variant<Types...> index
+   msgpack_object value = msgpack_data["B"]; // returns std::variant with current alternative type 'uint64_t' and value 0
 
-   std::string A = msgpack_data["A"].get<std::string>(); //gets a Value type (which is a wrapper around std::variant), then using accesses the std::string alternative type.
-   std::string A2 = msgpack_data.get<std::string>("A") // you should be rewarded for knowing the data type beforehand.
+   uint64_t val_uint = msgpack_data.get_int("B"); // val_uint = 0;
 
-   Msgpacksearch::Value nested = msgpack_data["D"] // returns std::variant with current alternative type 'Msgpacksearch::Value' and value msgpack([1, 2, 3]).. (should this return an Array type)
-   int nested_val = nested[0].get<int>() // returns int 1 from "C": 
-
-
-   /* Setters
-   *
-   * TBD.
-   */
-
-    /* Misc */   
+   msgpack_object nested = msgpack_data["C"] // nested = msgpack_array([1, 2, 3])
+   uint64_t nested_val = nested.get_int(0); // nested_val = 1
+   
    return 0;
 }
 ```
@@ -86,11 +77,6 @@ Dependencies
 - [CMake] build system version 3.13+;
 - C++17 compiler ([GCC] 7.3+)
 
-Build time settings
--------------------
-
-n/a
-
 Installation on Linux
 ---------------------
 
@@ -102,26 +88,23 @@ Installation on Linux
 
 Tests 
 ==========================
-
-There are no tests yet.
+    $ ./build/test/msgpacksearch_unittest
 
 License
 =======
 
-This library is distributed under the XYZ license. For conditions of distribution and use,
+This library is distributed under the MIT license. For conditions of distribution and use,
 see file `LICENSE.txt`.
 
 Feedback
 ========
 
-Any feedback are welcome. [Contact us][mail].
+Any feedback are welcome. Feel free to make a pull request or submit and issue.
 
 Copyright
 =========
 
-copyright info....
-
-[mail]: mailto:fake@gmail.com
+Adam Fillion 2019-2020
 
 [CMake]: https://cmake.org/
 [GCC]: https://gcc.gnu.org/
