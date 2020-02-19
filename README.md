@@ -6,7 +6,7 @@ This library provides a JSON-like interface for serialized Msgpack data.
 
 **ATTENTION, this software is in the alpha state!**
 
-Any [feedback][mail] (*especially results of testing*) is highly appreciated!
+Any feedback (*especially results of testing*) is highly appreciated!
 
 Features
 ========
@@ -75,6 +75,7 @@ Dependencies
 ------------
 
 - [CMake] build system version 3.13+;
+- Gtest
 - C++17 compiler ([GCC] 7.3+)
 
 Installation on Linux
@@ -99,7 +100,7 @@ see file `LICENSE.txt`.
 Feedback
 ========
 
-Any feedback are welcome. Feel free to make a pull request or submit and issue.
+Any feedback is welcome. Feel free to make a pull request or submit an issue.
 
 Copyright
 =========
